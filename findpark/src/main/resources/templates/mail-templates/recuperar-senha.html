@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #e6f0fa;
+            color: #1c3d5a;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1e73be;
+            font-size: 24px;
+            text-align: center;
+        }
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1c3d5a;
+        }
+        .button {
+            background-color: #1e73be;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 20px auto 0;
+            text-align: center;
+            color: white;
+            text-decoration: none;
+        }
+        .button-container {
+            text-align: center;
+        }
+        .footer a {
+            color: #1e73be;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Recuperação de Senha | FindPark</h1>
+    <p class="message">
+        Olá <span th:text="${name}"></span>,<br><br>
+        Recebemos uma solicitação para redefinir a sua senha de acesso ao Findpark.<br><br>
+        Para garantir a segurança da sua conta, clique no botão abaixo e siga as instruções para criar uma nova senha.
+    </p>
+
+    <div class="button-container">
+        <a th:href="${domain + '/atualizar-senha/' + token}" class="button">
+            Redefinir Senha
+        </a>
+    </div>
+
+    <p class="message">
+        Este link é válido por apenas 30 minutos. Após esse período, será necessário solicitar uma nova recuperação.
+    </p>
+    <p class="message">
+        Caso você não tenha feito esta solicitação, nenhuma ação é necessária. Sua conta permanecerá segura.
+    </p>
+
+    <p class="footer" style="text-align:center;">
+        <a th:href="${domain}">findpark.com.br</a>
+    </p>
+</div>
+</body>
+</html>

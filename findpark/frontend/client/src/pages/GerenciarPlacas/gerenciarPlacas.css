@@ -1,0 +1,54 @@
+.container {
+  max-width: 600px;
+}
+
+.titulo {
+  color: #0a3871;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.btn-azul {
+  background-color: #0a3871;
+  color: white;
+  border: none;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-azul:hover {
+  background-color: #06264a;
+  color: white;
+}
+
+.placa-item {
+  background-color: #f0f8ff;
+  border: 1px solid #d0e2ff;
+  margin-bottom: 8px;
+  border-radius: 6px;
+}
+
+.btn-icon {
+  background-color: transparent;
+  border: none;
+  color: #0a3871;
+  font-size: 1.1rem;
+  margin-left: 5px;
+}
+
+.btn-icon:hover {
+  color: #06264a;
+  transform: scale(1.1);
+}
+
+.swal-custom {
+  border-radius: 10px;
+}
+
+.swal-button-confirm {
+  background-color: #0a3871 !important;
+}
+
+.swal-button-cancel {
+  background-color: #ccc !important;
+  color: #000 !important;
+}
