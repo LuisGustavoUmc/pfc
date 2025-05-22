@@ -2,6 +2,7 @@ package br.com.findpark.entities;
 
 import br.com.findpark.entities.enums.vagas.StatusVaga;
 import br.com.findpark.entities.enums.vagas.TipoVaga;
+import org.springframework.data.annotation.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,4 +23,7 @@ public class Vaga {
     private List<TipoVaga> tipo;
     private double preco;
     private String estacionamentoId;
+
+    @Transient
+    private Estacionamento estacionamento;
 }

@@ -62,7 +62,7 @@ export default function Sidebar() {
           {role === "CLIENTE" && (
             <>
               <li className="sidebar-item">
-                <Link to="/vagas" className="sidebar-link">
+                <Link to={homePath} className="sidebar-link">
                   <i className="fa-solid fa-square-parking"></i>
                   <span>Vagas</span>
                 </Link>
@@ -85,7 +85,7 @@ export default function Sidebar() {
           {role === "PROPRIETARIO" && (
             <>
               <li className="sidebar-item">
-                <Link to="/estacionamentos" className="sidebar-link">
+                <Link to="/home-proprietario" className="sidebar-link">
                   <i className="lni lni-map-marker"></i>
                   <span>Meus Estacionamentos</span>
                 </Link>
@@ -109,7 +109,7 @@ export default function Sidebar() {
           )}
 
           <li className="sidebar-item">
-            <Link to="#" className="sidebar-link">
+            <Link to="/perfil" className="sidebar-link">
               <i className="fa-solid fa-user"></i>
               <span>Perfil</span>
             </Link>

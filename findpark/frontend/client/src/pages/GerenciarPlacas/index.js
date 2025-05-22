@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import './gerenciarPlacas.css'; 
+import "./gerenciarPlacas.css";
 
 export default function GerenciarPlacas() {
   const [placas, setPlacas] = useState([]);
@@ -14,8 +14,12 @@ export default function GerenciarPlacas() {
   const regexPlacaMercosul = /^[A-Z0-9]{1,7}$/;
 
   const carregarPlacas = () => {
-    api.get("/api/clientes/placas")
-      .then(response => setPlacas(response.data))
+    api
+      .get("/api/clientes/placas")
+      .then((response) => {
+        const dados = response.data;
+        setPlacas(Array.isArray(dados) ? dados : []);
+      })
       .catch(() => toast.error("Erro ao carregar placas"));
   };
 
@@ -33,7 +37,7 @@ export default function GerenciarPlacas() {
       return;
     }
 
-    if (placas.some(p => p.toUpperCase() === placa)) {
+    if (placas.some((p) => p.toUpperCase() === placa)) {
       toast.warn("Esta placa já está cadastrada.");
       return;
     }
@@ -47,23 +51,28 @@ export default function GerenciarPlacas() {
       customClass: {
         popup: "swal-custom",
         confirmButton: "swal-button-confirm",
-        cancelButton: "swal-button-cancel"
-      }
-    }).then(result => {
+        cancelButton: "swal-button-cancel",
+      },
+    }).then((result) => {
       if (!result.isConfirmed) return;
 
-      api.post("/api/clientes/placas", { placa }, {
-        headers: { "Content-Type": "application/json" }
-      })
+      api
+        .post(
+          "/api/clientes/placas",
+          { placa },
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+        )
         .then(() => {
           Swal.fire({
-            icon: 'success',
-            title: 'Placa adicionada!',
+            icon: "success",
+            title: "Placa adicionada!",
             timer: 2000,
             showConfirmButton: false,
             customClass: {
-              popup: "swal-custom"
-            }
+              popup: "swal-custom",
+            },
           });
           setNovaPlaca("");
           carregarPlacas();
@@ -71,7 +80,6 @@ export default function GerenciarPlacas() {
         .catch(() => toast.error("Erro ao adicionar placa."));
     });
   };
-
 
   const removerPlaca = (placa) => {
     Swal.fire({
@@ -83,12 +91,13 @@ export default function GerenciarPlacas() {
       customClass: {
         popup: "swal-custom",
         confirmButton: "swal-button-confirm",
-        cancelButton: "swal-button-cancel"
-      }
-    }).then(result => {
+        cancelButton: "swal-button-cancel",
+      },
+    }).then((result) => {
       if (!result.isConfirmed) return;
 
-      api.delete(`/api/clientes/placas?placa=${encodeURIComponent(placa)}`)
+      api
+        .delete(`/api/clientes/placas?placa=${encodeURIComponent(placa)}`)
         .then(() => {
           toast.success("Placa removida com sucesso!");
           carregarPlacas();
@@ -123,15 +132,16 @@ export default function GerenciarPlacas() {
       customClass: {
         popup: "swal-custom",
         confirmButton: "swal-button-confirm",
-        cancelButton: "swal-button-cancel"
-      }
-    }).then(result => {
+        cancelButton: "swal-button-cancel",
+      },
+    }).then((result) => {
       if (!result.isConfirmed) return;
 
-      api.put("/api/clientes/placas", {
-        antiga: editandoPlaca,
-        nova: nova
-      })
+      api
+        .put("/api/clientes/placas", {
+          antiga: editandoPlaca,
+          nova: nova,
+        })
         .then(() => {
           toast.success("Placa atualizada com sucesso!");
           cancelarEdicao();
@@ -139,6 +149,25 @@ export default function GerenciarPlacas() {
         })
         .catch(() => toast.error("Erro ao atualizar placa."));
     });
+  };
+
+  const filtrarPlacaInput = (valor) => {
+    valor = valor.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const letras = valor.match(/[A-Z]/g) || [];
+    const numeros = valor.match(/\d/g) || [];
+
+    // impede mais de 7 caracteres
+    if (valor.length > 7) {
+      valor = valor.slice(0, 7);
+    }
+
+    // impede adicionar mais letras se já houver 4 letras e ainda não houver 2 números
+    if (letras.length > 4 && numeros.length < 2) {
+      // remove o último caractere (assumido como letra inválida)
+      valor = valor.slice(0, -1);
+    }
+
+    return valor;
   };
 
   return (
@@ -149,9 +178,9 @@ export default function GerenciarPlacas() {
         <input
           type="text"
           className="form-control"
-          placeholder="Digite a nova placa (ex: ABC1234)"
+          placeholder="Digite a nova placa (ex: AAA1234 ou AAAA123)"
           value={novaPlaca}
-          onChange={(e) => setNovaPlaca(e.target.value.toUpperCase())}
+          onChange={(e) => setNovaPlaca(filtrarPlacaInput(e.target.value))}
           maxLength={7}
         />
         <button className="btn btn-azul" onClick={adicionarPlaca}>
@@ -168,23 +197,43 @@ export default function GerenciarPlacas() {
                   <input
                     type="text"
                     value={placaEditada}
-                    onChange={(e) => setPlacaEditada(e.target.value.toUpperCase())}
+                    onChange={(e) =>
+                      setPlacaEditada(filtrarPlacaInput(e.target.value))
+                    }
                     maxLength={7}
                     className="form-control me-2"
                   />
                   <div className="btn-group">
-                    <button className="btn btn-success btn-sm" onClick={salvarEdicao}>Salvar</button>
-                    <button className="btn btn-secondary btn-sm" onClick={cancelarEdicao}>Cancelar</button>
+                    <button
+                      className="btn btn-success btn-sm"
+                      onClick={salvarEdicao}
+                    >
+                      Salvar
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={cancelarEdicao}
+                    >
+                      Cancelar
+                    </button>
                   </div>
                 </>
               ) : (
                 <>
-                  <span><strong>Placa {index + 1}:</strong> {placa}</span>
+                  <span>
+                    <strong>Placa {index + 1}:</strong> {placa}
+                  </span>
                   <div className="btn-group">
-                    <button className="btn btn-icon" onClick={() => iniciarEdicao(placa)}>
+                    <button
+                      className="btn btn-icon"
+                      onClick={() => iniciarEdicao(placa)}
+                    >
                       <i className="fas fa-edit"></i>
                     </button>
-                    <button className="btn btn-icon" onClick={() => removerPlaca(placa)}>
+                    <button
+                      className="btn btn-icon"
+                      onClick={() => removerPlaca(placa)}
+                    >
                       <i className="fas fa-trash-alt"></i>
                     </button>
                   </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../../services/api";
+import { formatarEndereco } from "../../utils/Utils";
 
 export default function DetalhesEstacionamento() {
   const { id } = useParams();
@@ -27,7 +28,7 @@ export default function DetalhesEstacionamento() {
   return (
     <div className="container mt-4">
       <h3>{estacionamento.nome}</h3>
-      <p><strong>Endereço:</strong> {estacionamento.endereco}</p>
+      <p><strong>Endereço:</strong> {formatarEndereco(estacionamento.endereco)}</p>
       <p><strong>Capacidade:</strong> {estacionamento.capacidade}</p>
       <p><strong>Vagas disponíveis:</strong> {estacionamento.vagasDisponiveis}/{estacionamento.capacidade}</p>
       <p><strong>Horário de funcionamento:</strong> {estacionamento.horaAbertura} às {estacionamento.horaFechamento}</p>
@@ -37,7 +38,8 @@ export default function DetalhesEstacionamento() {
         {estacionamento.vagas.map((vaga) => (
           <li key={vaga.id} className="list-group-item d-flex justify-content-between align-items-center">
             <div>
-              Tipo: {vaga.tipo.join(", ")} - Preço: R$ {vaga.preco}
+              Tipo: {Array.isArray(vaga.tipo) ? vaga.tipo.join(", ") : vaga.tipo} - 
+              Preço: {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(vaga.preco)}
             </div>
             <Link to={`/vagas/${vaga.id}`} className="btn btn-primary btn-sm">
               Reservar

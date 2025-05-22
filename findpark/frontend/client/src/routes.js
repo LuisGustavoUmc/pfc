@@ -17,7 +17,11 @@ import HomeProprietario from "./pages/HomeProprietario"
 import DetalhesEstacionamento from "./pages/EstacionamentoDetalhes";
 import CadastrarVaga from "./pages/CadastrarVaga";
 import GerenciarVagas from "./pages/GerenciarVagas";
-import ReservaDetalhes from "./pages/ReservaDetalhes"
+import ReservaDetalhes from "./pages/ReservaDetalhes";
+import Perfil from "./pages/Perfil";
+import TrocarSenha from "./pages/TrocarSenha"
+import AlterarEmail from "./pages/AlterarEmail"; 
+import NovoEstacionamento from "./pages/NovoEstacionamento";
 
 export default function AppRoutes() {
   return (
@@ -44,6 +48,10 @@ export default function AppRoutes() {
           <Route path="/estacionamentos/:estacionamentoId/cadastrar-vaga" element={<CadastrarVaga />} />
           <Route path="/estacionamentos/:estacionamentoId/gerenciar-vagas" element={<GerenciarVagas />} />
           <Route path="/reservas" element={<ReservaDetalhes />} />
+          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/trocar-senha" element={<TrocarSenha />} />
+          <Route path="/alterar-email" element={<AlterarEmail />} />
+          <Route path="/estacionamentos/novo" element={<NovoEstacionamento />} />
         </Route>
       </Routes>
     </BrowserRouter>

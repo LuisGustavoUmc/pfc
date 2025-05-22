@@ -8,4 +8,9 @@ import java.util.Optional;
 
 public interface EstacionamentoRepository extends MongoRepository<Estacionamento, String> {
     List<Estacionamento> findAllByIdProprietario(String idProprietario);
+    List<Estacionamento> findByEndereco_LocalidadeIgnoreCase(String cidade);
+    List<Estacionamento> findByEndereco_BairroIgnoreCase(String bairro);
+    List<Estacionamento> findByEndereco_UfIgnoreCase(String estado);
+    List<Estacionamento> findByEndereco_LocalidadeIgnoreCaseAndEndereco_BairroIgnoreCase(String cidade, String bairro);
+
 }

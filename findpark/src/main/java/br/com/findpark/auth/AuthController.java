@@ -1,9 +1,6 @@
 package br.com.findpark.auth;
 
-import br.com.findpark.auth.dtos.AuthResponseDto;
-import br.com.findpark.auth.dtos.LoginUsuarioDto;
-import br.com.findpark.auth.dtos.RecoverDto;
-import br.com.findpark.auth.dtos.RecoverPasswordDto;
+import br.com.findpark.auth.dtos.*;
 import br.com.findpark.dtos.RespostaDto;
 import br.com.findpark.entities.Usuario;
 import br.com.findpark.entities.enums.usuarios.Validade;
@@ -12,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -93,5 +91,16 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
                 .body(res);
+    }
+
+    @PatchMapping("/trocar-senha")
+    public ResponseEntity<RespostaDto> trocarSenha(
+            @RequestBody TrocarSenhaDto dto,
+            @AuthenticationPrincipal Usuario usuario) {
+
+        authService.trocarSenha(usuario, dto);
+
+        var resposta = new RespostaDto(HttpStatus.OK, "Senha alterada com sucesso", true, Optional.empty());
+        return ResponseEntity.ok(resposta);
     }
 }

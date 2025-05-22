@@ -1,9 +1,6 @@
 package br.com.findpark.auth;
 
-import br.com.findpark.auth.dtos.AuthResponseDto;
-import br.com.findpark.auth.dtos.LoginUsuarioDto;
-import br.com.findpark.auth.dtos.RecoverDto;
-import br.com.findpark.auth.dtos.RecoverPasswordDto;
+import br.com.findpark.auth.dtos.*;
 import br.com.findpark.auth.jwt.TokenService;
 import br.com.findpark.email.EmailService;
 import br.com.findpark.email.EmailTemplate;
@@ -94,5 +91,13 @@ public class AuthService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario não encontrado!"));
 
         usuarioService.updatePassword(usuario, dto.senha());
+    }
+
+    public void trocarSenha(Usuario usuario, TrocarSenhaDto dto) {
+        if (!passwordEncoder.matches(dto.senhaAtual(), usuario.getSenha())) {
+            throw new RuntimeException("Senha atual incorreta.");
+        }
+
+        usuarioService.updatePassword(usuario, dto.novaSenha());
     }
 }

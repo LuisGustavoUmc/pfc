@@ -1,6 +1,7 @@
 package br.com.findpark.controllers;
 
 import br.com.findpark.dtos.RespostaDto;
+import br.com.findpark.dtos.reservas.ReservaDetalhadaDto;
 import br.com.findpark.entities.Reserva;
 import br.com.findpark.service.ReservaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class ReservaController {
     }
 
     @GetMapping
-    public List<Reserva> listarMinhasReservas() {
+    public List<ReservaDetalhadaDto> listarMinhasReservas() {
         return reservaService.listarMinhasReservas();
     }
 

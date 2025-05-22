@@ -12,6 +12,7 @@ import br.com.findpark.repositories.VagaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.Normalizer;
 import java.util.List;
 
 @Service
@@ -54,8 +55,28 @@ public class EstacionamentoService {
                 est.getId(),
                 est.getNome(),
                 est.getEndereco(),
+                est.getTelefone(),
                 est.getCapacidade(),
                 vagasLivres.size(),
+                est.getHoraAbertura().toString(),
+                est.getHoraFechamento().toString(),
+                vagaDtos
+        );
+    }
+
+    private DetalhesEstacionamentoDto converterParaDetalhesDto(Estacionamento est) {
+        List<VagaDto> vagaDtos = vagaRepository.findByEstacionamentoIdAndStatus(est.getId(), StatusVaga.LIVRE)
+                .stream()
+                .map(v -> new VagaDto(v.getId(), v.getTipo(), v.getPreco()))
+                .toList();
+
+        return new DetalhesEstacionamentoDto(
+                est.getId(),
+                est.getNome(),
+                est.getEndereco(),
+                est.getTelefone(),
+                est.getCapacidade(),
+                vagaDtos.size(),
                 est.getHoraAbertura().toString(),
                 est.getHoraFechamento().toString(),
                 vagaDtos
@@ -65,6 +86,7 @@ public class EstacionamentoService {
     public void atualizarEstacionamento(Estacionamento estacionamento, AtualizarEstacionamentoDto dto) {
         if (dto.nome() != null) estacionamento.setNome(dto.nome());
         if (dto.endereco() != null) estacionamento.setEndereco(dto.endereco());
+        if (dto.telefone() != null) estacionamento.setTelefone(dto.telefone());
         estacionamento.setCapacidade(dto.capacidade());
         estacionamento.setVagasDisponiveis(dto.vagasDisponiveis());
 

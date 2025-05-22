@@ -7,28 +7,29 @@ import imgTelaLogin from "../../assets/img-telalogin-esquerda.jpg";
 import api from "../../services/api";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [errors, setErrors] = useState({ email: '', senha: '' });
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [errors, setErrors] = useState({ email: "", senha: "" });
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const [loginError, setLoginError] = useState("");
 
   // Função de Validação
   const validate = () => {
-    const newErrors = { email: '', senha: '' };
+    const newErrors = { email: "", senha: "" };
     if (!email) {
-      newErrors.email = 'Email é obrigatório';
+      newErrors.email = "Email é obrigatório";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = "Email inválido";
     }
 
     if (!senha) {
-      newErrors.senha = 'Senha é obrigatória';
+      newErrors.senha = "Senha é obrigatória";
     }
 
     setErrors(newErrors);
-    return Object.values(newErrors).every((error) => error === '');
+    return Object.values(newErrors).every((error) => error === "");
   };
 
   async function login(e) {
@@ -39,6 +40,7 @@ export default function Login() {
     }
 
     setIsLoading(true);
+    setLoginError("");
 
     const data = {
       email,
@@ -62,7 +64,7 @@ export default function Login() {
         navigate("/home-proprietario"); // Página do proprietário
       }
     } catch (err) {
-      alert("Falha no Login! Tente novamente!");
+      setLoginError("Usuário ou senha incorretos. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +74,10 @@ export default function Login() {
     <div className="row vh-100 g-0">
       {/* Lado esquerdo */}
       <div className="col-lg-6 position-relative d-none d-lg-block">
-        <div className="bg-holder" style={{ backgroundImage: `url(${imgTelaLogin})` }}></div>
+        <div
+          className="bg-holder"
+          style={{ backgroundImage: `url(${imgTelaLogin})` }}
+        ></div>
       </div>
 
       {/* Lado direito */}
@@ -97,12 +102,15 @@ export default function Login() {
                 </span>
                 <input
                   type="email"
-                  className={`form-control form-control-lg fs-6 ${errors.email ? 'is-invalid' : ''}`}
+                  className={`form-control form-control-lg fs-6 ${errors.email ? "is-invalid" : ""}`}
                   placeholder="E-mail"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => setLoginError("")}
                 />
-                {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                {errors.email && (
+                  <div className="invalid-feedback">{errors.email}</div>
+                )}
               </div>
               <div className="input-group mb-3">
                 <span className="input-group-text">
@@ -110,32 +118,56 @@ export default function Login() {
                 </span>
                 <input
                   type="password"
-                  className={`form-control form-control-lg fs-6 ${errors.senha ? 'is-invalid' : ''}`}
+                  className={`form-control form-control-lg fs-6 ${errors.senha ? "is-invalid" : ""}`}
                   placeholder="Senha"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
+                  onFocus={() => setLoginError("")}
                 />
-                {errors.senha && <div className="invalid-feedback">{errors.senha}</div>}
+                {errors.senha && (
+                  <div className="invalid-feedback">{errors.senha}</div>
+                )}
               </div>
               <div className="input-group mb-3 d-flex justify-content-between">
                 <div className="form-check">
-                  <input type="checkbox" className="form-check-input" id="formCheck" />
-                  <label htmlFor="formCheck" className="form-check-label text-secondary">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="formCheck"
+                  />
+                  <label
+                    htmlFor="formCheck"
+                    className="form-check-label text-secondary"
+                  >
                     <small>Lembrar de mim</small>
                   </label>
                 </div>
                 <div>
-                  <small><Link to="/recuperar-senha">Esqueceu a senha?</Link></small>
+                  <small>
+                    <Link to="/recuperar-senha">Esqueceu a senha?</Link>
+                  </small>
                 </div>
               </div>
-              <button type="submit" className="btn btn-primary btn-lg w-100 mb-3" disabled={isLoading}>
-                {isLoading ? 'Carregando...' : 'Entrar'}
+              <button
+                type="submit"
+                className="btn btn-primary btn-lg w-100 mb-3"
+                disabled={isLoading}
+              >
+                {isLoading ? "Carregando..." : "Entrar"}
               </button>
+
+              {loginError && (
+                <div className="text-danger text-center mt-2">{loginError}</div>
+              )}
             </form>
+
             {/* Fomulário */}
 
             <div className="text-center">
-              <small>Não tem uma conta? <Link to={"/nova-conta"}>Criar nova conta</Link></small>
+              <small>
+                Não tem uma conta?{" "}
+                <Link to={"/nova-conta"}>Criar nova conta</Link>
+              </small>
             </div>
           </div>
         </div>

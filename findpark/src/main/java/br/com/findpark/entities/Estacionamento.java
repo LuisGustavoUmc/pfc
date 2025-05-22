@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @Document(collection = "estacionamentos")
 @Data
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Estacionamento {
@@ -21,7 +23,8 @@ public class Estacionamento {
     @Id
     private String id;
     private String nome;
-    private String endereco;
+    private Endereco endereco;
+    private String telefone;
 
     @Min(1)
     private int capacidade;

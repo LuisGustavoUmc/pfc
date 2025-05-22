@@ -1,12 +1,11 @@
 package br.com.findpark.dtos.estacionamentos;
 
-import br.com.findpark.entities.Vaga;
-
-import java.util.List;
+import br.com.findpark.entities.Endereco;
 
 public record AtualizarEstacionamentoDto(
         String nome,
-        String endereco,
+        Endereco endereco,
+        String telefone,
         int capacidade,
         int vagasDisponiveis
 ) {

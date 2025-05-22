@@ -7,6 +7,5 @@ public enum TipoVaga {
     ELETRICO,
     MOTO,
     COBERTA,
-    DESCOBERTA,
-    RAPIDA
+    DESCOBERTA
 }

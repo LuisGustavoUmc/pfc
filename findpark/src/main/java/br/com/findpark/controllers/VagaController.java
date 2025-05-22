@@ -41,6 +41,11 @@ public class VagaController {
         return vagaService.buscarDetalhesPorId(id);
     }
 
+    @GetMapping("/filtrar")
+    public List<Vaga> buscarVagasFiltradas(@RequestParam String termo) {
+        return vagaService.buscarPorTermo(termo);
+    }
+
     @GetMapping("/estacionamento/{estacionamentoId}")
     public List<Vaga> buscarPorEstacionamento(@PathVariable String estacionamentoId) {
         return vagaService.buscarPorEstacionamento(estacionamentoId);

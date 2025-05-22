@@ -10,6 +10,7 @@ import br.com.findpark.repositories.VagaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.Normalizer;
 import java.util.List;
 
 @Service
@@ -56,6 +57,40 @@ public class VagaService {
                     estacionamento
             );
         }).toList();
+    }
+
+    public List<Vaga> buscarPorTermo(String termo) {
+        String termoNormalizado = normalize(termo);
+
+        return vagaRepository.findAll().stream()
+                .filter(vaga -> {
+                    Estacionamento est = estacionamentoRepository.findById(vaga.getEstacionamentoId()).orElse(null);
+                    if (est == null) return false;
+
+                    String nome = normalize(est.getNome());
+                    String cidade = normalize(est.getEndereco().getLocalidade());
+                    String bairro = normalize(est.getEndereco().getBairro());
+                    String estado = normalize(est.getEndereco().getUf());
+
+                    return nome.contains(termoNormalizado)
+                            || cidade.contains(termoNormalizado)
+                            || bairro.contains(termoNormalizado)
+                            || estado.contains(termoNormalizado);
+                })
+                .peek(vaga -> {
+                    // atribui o estacionamento para a vaga
+                    Estacionamento est = estacionamentoRepository.findById(vaga.getEstacionamentoId()).orElse(null);
+                    vaga.setEstacionamento(est);
+                })
+                .toList();
+    }
+
+    private String normalize(String s) {
+        if (s == null) return "";
+        return Normalizer.normalize(s, Normalizer.Form.NFD)
+                .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+                .toLowerCase()
+                .trim();
     }
 
     public VagaComEstacionamentoDto buscarDetalhesPorId(String id) {

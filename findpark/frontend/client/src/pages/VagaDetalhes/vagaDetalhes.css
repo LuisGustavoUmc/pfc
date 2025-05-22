@@ -1,111 +1,88 @@
+/* Estilo geral do container */
 .container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 30px;
-  background-color: #fdfdfd;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff; /* Fundo branco */
+  border-radius: 8px; /* Bordas arredondadas */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  padding: 20px; /* Espaçamento interno */
+  margin: 20px auto; /* Margem automática para centralizar */
+  max-width: 1100px; /* Largura máxima do container */
 }
 
-.titulo {
-  color: #0a3871;
-  font-weight: bold;
-  margin-bottom: 20px;
-  font-size: 2rem;
-  text-align: center;
+/* Estilo dos títulos */
+h3 {
+  color: #007bff; /* Azul primário */
+  margin-bottom: 20px; /* Espaçamento abaixo do título */
 }
 
-.vaga-detalhes-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 40px;
-  row-gap: 10px;
-  margin-bottom: 30px;
+/* Estilo dos parágrafos */
+p {
+  color: #333; /* Cor do texto */
+  margin: 5px 0; /* Margem vertical */
 }
 
-.vaga-detalhes-grid p {
-  margin: 5px 0;
+/* Estilo dos labels */
+.form-label {
+  color: #007bff; /* Azul primário */
+  font-weight: bold; /* Negrito */
 }
 
-.input-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* Estilo para os campos de data */
+.inp-reserva {
+  border: none; /* Remove a borda */
+  border-bottom: 2px solid #007bff; /* Borda inferior azul */
+  border-radius: 0; /* Remove bordas arredondadas */
+  width: 100%; /* Largura total */
+  padding: 5px 0; /* Espaçamento interno */
+  font-size: 16px; /* Tamanho da fonte */
+  min-width: 200px; /* Largura mínima para o campo */
 }
 
-label.form-label {
-  font-weight: 500;
-  margin-bottom: 5px;
+/* Estilo dos selects */
+.form-select {
+  border: 1px solid #007bff; /* Borda azul */
+  border-radius: 4px; /* Bordas arredondadas */
+  padding: 10px; /* Espaçamento interno */
+  width: 100%; /* Largura total */
+  margin-top: 5px; /* Margem acima do input */
 }
 
-input[type="datetime-local"],
-select.form-select {
-  padding: 10px;
-  font-size: 1rem;
+/* Estilo do botão */
+.btn-primary {
+  background-color: #007bff; /* Azul primário */
+  border: none; /* Sem borda */
+  color: white; /* Texto branco */
+  padding: 10px 15px; /* Espaçamento interno */
+  border-radius: 4px; /* Bordas arredondadas */
+  cursor: pointer; /* Cursor de ponteiro */
+  transition: background-color 0.3s; /* Transição suave */
 }
 
-.actions {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 30px;
+.btn-primary:hover {
+  background-color: #0056b3; /* Azul mais escuro ao passar o mouse */
 }
 
-.btn-azul {
-  background-color: #0a3871;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-size: 1rem;
-  border-radius: 5px;
-  transition: background-color 0.2s ease-in-out;
+/* Estilo da mensagem de alerta */
+.alert {
+  margin-top: 20px; /* Margem acima da mensagem */
+  padding: 10px; /* Espaçamento interno */
+  border-radius: 4px; /* Bordas arredondadas */
 }
 
-.btn-azul:hover {
-  background-color: #06264a;
-  color: white;
+/* Estilo da mensagem de sucesso */
+.alert-success {
+  background-color: #d4edda; /* Verde claro */
+  color: #155724; /* Texto verde escuro */
 }
 
-.btn-secondary {
-  padding: 10px 20px;
-  font-size: 1rem;
-  border-radius: 5px;
+/* Estilo da mensagem de erro */
+.alert-error {
+  background-color: #f8d7da; /* Vermelho claro */
+  color: #721c24; /* Texto vermelho escuro */
 }
 
-.text-success {
-  text-align: center;
-  font-weight: 500;
+/* Estilo da mensagem de informação */
+.alert-info {
+  background-color: #cce5ff; /* Azul claro */
+  color: #004085; /* Texto azul escuro */
 }
 
-.swal-custom {
-  border-radius: 10px;
-}
-
-.swal-button-confirm {
-  background-color: #0a3871 !important;
-  color: white !important;
-}
-
-.swal-button-cancel {
-  background-color: #ccc !important;
-  color: #000 !important;
-}
-
-.input-linha {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.input-linha label {
-  min-width: 180px;
-  margin: 0;
-}
-
-.input-linha input,
-.input-linha select {
-  flex: 1;
-  padding: 10px;
-  font-size: 1rem;
-}

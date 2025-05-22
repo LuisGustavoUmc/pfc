@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { formatarEndereco } from "../../utils/Utils";
 
 const HomeProprietario = () => {
   const [estacionamentos, setEstacionamentos] = useState([]);
-  const [form, setForm] = useState({
-    nome: "",
-    endereco: "",
-    capacidade: 1,
-    horaAbertura: "08:00",
-    horaFechamento: "18:00",
-  });
   const [nomeUsuario, setNomeUsuario] = useState("");
   const navigate = useNavigate();
 
@@ -29,33 +23,12 @@ const HomeProprietario = () => {
       });
   }, []);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    api
-      .post("/api/estacionamentos", form)
-      .then((res) => {
-        setEstacionamentos([...estacionamentos, res.data]);
-        setForm({
-          nome: "",
-          endereco: "",
-          capacidade: 1,
-          horaAbertura: "08:00",
-          horaFechamento: "18:00",
-        });
-      })
-      .catch((err) => {
-        console.error("Erro ao cadastrar estacionamento:", err);
-        alert("Erro ao cadastrar estacionamento.");
-      });
-  };
-
   const handleCadastrarVaga = (estacionamentoId) => {
     navigate(`/estacionamentos/${estacionamentoId}/cadastrar-vaga`);
+  };
+
+  const handleNovoEstacionamento = () => {
+    navigate("/estacionamentos/novo");
   };
 
   return (
@@ -64,66 +37,12 @@ const HomeProprietario = () => {
         Bem-vindo, {nomeUsuario || "Proprietário"}!
       </h1>
 
-      <h2 className="text-xl font-semibold mb-2">Cadastrar novo estacionamento</h2>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
-        <input
-          type="text"
-          name="nome"
-          placeholder="Nome do Estacionamento"
-          value={form.nome}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="text"
-          name="endereco"
-          placeholder="Endereço"
-          value={form.endereco}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="number"
-          name="capacidade"
-          placeholder="Capacidade"
-          value={form.capacidade}
-          onChange={handleChange}
-          min={1}
-          required
-          className="w-full border p-2 rounded"
-        />
-        <div className="flex gap-4">
-          <div>
-            <label className="block text-sm">Hora de Abertura</label>
-            <input
-              type="time"
-              name="horaAbertura"
-              value={form.horaAbertura}
-              onChange={handleChange}
-              required
-              className="border p-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm">Hora de Fechamento</label>
-            <input
-              type="time"
-              name="horaFechamento"
-              value={form.horaFechamento}
-              onChange={handleChange}
-              required
-              className="border p-2 rounded"
-            />
-          </div>
-        </div>
-        <button type="submit" className="btn btn-primary">
-          Cadastrar Estacionamento
-        </button>
-      </form>
-
-      <hr className="my-6" />
+      <button
+        onClick={handleNovoEstacionamento}
+        className="btn btn-primary mb-6"
+      >
+        Cadastrar novo estacionamento
+      </button>
 
       <h2 className="text-xl font-semibold mb-4">Meus Estacionamentos</h2>
       <div className="grid gap-4">
@@ -133,11 +52,18 @@ const HomeProprietario = () => {
           estacionamentos.map((e) => (
             <div key={e.id} className="border rounded p-4 shadow">
               <h3 className="text-lg font-bold">{e.nome}</h3>
-              <p><strong>Endereço:</strong> {e.endereco}</p>
-              <p><strong>Capacidade:</strong> {e.capacidade}</p>
-              <p><strong>Horário:</strong> {e.horaAbertura} às {e.horaFechamento}</p>
+              <p>
+                <strong>Endereço:</strong> {formatarEndereco(e.endereco, e.numero)}
+              </p>
+
+              <p>
+                <strong>Capacidade:</strong> {e.capacidade}
+              </p>
+              <p>
+                <strong>Horário:</strong> {e.horaAbertura} às {e.horaFechamento}
+              </p>
               <button
-                className="btn btn-primary"
+                className="btn btn-primary mt-2"
                 onClick={() => handleCadastrarVaga(e.id)}
               >
                 Cadastrar Vaga

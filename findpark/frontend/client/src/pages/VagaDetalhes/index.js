@@ -5,91 +5,184 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./vagaDetalhes.css";
+import {
+  formatarEndereco,
+  gerarHorariosEntre,
+  validarHorarioDentroFuncionamento,
+  formatarDataHora,
+  calcularDuracaoHoras,
+  calcularTotal,
+  formatarPreco,
+  gerarResumoReservaHTML,
+} from "../../utils/Utils";
+
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import ptBR from "date-fns/locale/pt-BR";
+
+registerLocale("pt-BR", ptBR);
 
 export default function VagaDetalhes() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [vaga, setVaga] = useState(null);
-  const [entrada, setEntrada] = useState("");
-  const [saida, setSaida] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [erroCarregamento, setErroCarregamento] = useState(false);
+  const [estacionamento, setEstacionamento] = useState(null);
+  const [dataEntrada, setDataEntrada] = useState(null);
+  const [horaEntrada, setHoraEntrada] = useState("");
+  const [dataSaida, setDataSaida] = useState(null);
+  const [horaSaida, setHoraSaida] = useState("");
+
   const [placas, setPlacas] = useState([]);
   const [placaSelecionada, setPlacaSelecionada] = useState("");
+
   const [mensagem, setMensagem] = useState("");
 
-  const agora = new Date().toISOString().slice(0, 16);
-
-  const anoValido = (dataStr) => /^\d{4}$/.test(dataStr?.substring(0, 4));
+  // Resetar data e hora de saída se dataEntrada for alterada e saída ficar inválida
+  useEffect(() => {
+    if (dataSaida && dataEntrada && dataSaida < dataEntrada) {
+      setDataSaida(null);
+      setHoraSaida("");
+    }
+  }, [dataEntrada, dataSaida]);
 
   const handleConfirmarClick = () => {
     setMensagem("");
 
-    if (!entrada || !saida || !placaSelecionada) {
+    if (!vaga || !vaga.estacionamento) {
+      toast.error("Informações da vaga ainda não carregadas.");
+      return;
+    }
+
+    const { horaAbertura, horaFechamento } = vaga.estacionamento;
+
+    // Validar horários dentro do funcionamento
+    if (
+      !validarHorarioDentroFuncionamento(
+        dataEntrada,
+        horaEntrada,
+        horaAbertura,
+        horaFechamento
+      )
+    ) {
+      toast.error(
+        "Horário de entrada fora do funcionamento do estacionamento."
+      );
+      return;
+    }
+
+    if (
+      !validarHorarioDentroFuncionamento(
+        dataSaida,
+        horaSaida,
+        horaAbertura,
+        horaFechamento
+      )
+    ) {
+      toast.error("Horário de saída fora do funcionamento do estacionamento.");
+      return;
+    }
+
+    if (
+      !dataEntrada ||
+      !horaEntrada ||
+      !dataSaida ||
+      !horaSaida ||
+      !placaSelecionada
+    ) {
       toast.error("Preencha todas as informações e selecione uma placa.");
       return;
     }
 
-    if (!anoValido(entrada) || !anoValido(saida)) {
-      toast.error("Data inválida. Ano deve ter 4 dígitos.");
-      return;
-    }
+    const entrada = new Date(
+      dataEntrada.getFullYear(),
+      dataEntrada.getMonth(),
+      dataEntrada.getDate(),
+      parseInt(horaEntrada.split(":")[0]),
+      parseInt(horaEntrada.split(":")[1])
+    );
 
-    const dataEntrada = new Date(entrada);
-    const dataSaida = new Date(saida);
-    const agoraDate = new Date();
+    const saida = new Date(
+      dataSaida.getFullYear(),
+      dataSaida.getMonth(),
+      dataSaida.getDate(),
+      parseInt(horaSaida.split(":")[0]),
+      parseInt(horaSaida.split(":")[1])
+    );
 
-    if (dataEntrada < agoraDate) {
+    const agora = new Date();
+
+    if (entrada < agora) {
       toast.error("Data/hora de entrada não pode ser no passado.");
       return;
     }
 
-    if (dataSaida <= dataEntrada) {
+    if (saida <= entrada) {
       toast.error("Data/hora de saída deve ser após a entrada.");
       return;
     }
 
-    const duracaoHoras = Math.ceil(
-      (dataSaida - dataEntrada) / (1000 * 60 * 60)
-    );
-    const total = duracaoHoras * vaga.preco;
+    const duracaoHoras = calcularDuracaoHoras(entrada, saida);
+    const total = calcularTotal(duracaoHoras, vaga.preco);
+    const precoHora = formatarPreco(vaga.preco);
+    const totalFormatado = formatarPreco(total);
+    const enderecoFormatado = formatarEndereco(vaga.estacionamento.endereco);
+    const funcionamento =
+      vaga.estacionamento.horaAbertura && vaga.estacionamento.horaFechamento
+        ? `${vaga.estacionamento.horaAbertura.slice(0, 5)} - ${vaga.estacionamento.horaFechamento.slice(0, 5)}`
+        : "Não informado";
+
+    const htmlResumo = gerarResumoReservaHTML({
+      nomeEstacionamento: vaga.estacionamento.nome,
+      endereco: enderecoFormatado,
+      funcionamento,
+      telefone: vaga.estacionamento.telefone,
+      idVaga: vaga.id,
+      tipoVaga: vaga.tipo.join(", "),
+      placa: placaSelecionada,
+      entrada: `${dataEntrada.toLocaleDateString()} ${horaEntrada}`,
+      saida: `${dataSaida.toLocaleDateString()} ${horaSaida}`,
+      duracaoHoras,
+      precoHora,
+      total: totalFormatado,
+    });
 
     Swal.fire({
       title: "Confirmação de Reserva",
-      html: `
-        <h5>Resumo da Reserva</h5>
-        <p><strong>Estacionamento:</strong> ${vaga.estacionamento.nome}</p>
-        <p><strong>Endereço:</strong> ${vaga.estacionamento.endereco}</p>
-        <p><strong>Funcionamento:</strong> ${
-          vaga.estacionamento.horaAbertura && vaga.estacionamento.horaFechamento
-            ? `${vaga.estacionamento.horaAbertura.slice(0, 5)} - ${vaga.estacionamento.horaFechamento.slice(0, 5)}`
-            : "Não informado"
-        }</p>
-        <p><strong>Vaga ID:</strong>${vaga.id}</p>
-        <p><strong>Tipo:</strong> ${vaga.tipo.join(", ")}</p>
-        <p><strong>Placa:</strong> ${placaSelecionada}</p>
-        <p><strong>Entrada:</strong> ${entrada.replace("T", " ")}</p>
-        <p><strong>Saída:</strong> ${saida.replace("T", " ")}</p>
-        <p><strong>Duração:</strong> ${duracaoHoras} hora(s)</p>
-        <p><strong>Preço por hora:</strong> R$ ${vaga.preco.toFixed(2)}</p>
-        <hr>
-        <p><strong>Total:</strong> R$ ${total.toFixed(2)}</p>
-      `,
+      html: htmlResumo,
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "Confirmar Reserva",
       cancelButtonText: "Cancelar",
-      customClass: {
-        popup: "swal-custom",
-        confirmButton: "swal-button-confirm",
-        cancelButton: "swal-button-cancel",
-      },
     }).then((result) => {
       if (result.isConfirmed) {
-        confirmarReserva();
+        const entrada = new Date(
+          dataEntrada.getFullYear(),
+          dataEntrada.getMonth(),
+          dataEntrada.getDate(),
+          parseInt(horaEntrada.split(":")[0]),
+          parseInt(horaEntrada.split(":")[1])
+        );
+
+        const saida = new Date(
+          dataSaida.getFullYear(),
+          dataSaida.getMonth(),
+          dataSaida.getDate(),
+          parseInt(horaSaida.split(":")[0]),
+          parseInt(horaSaida.split(":")[1])
+        );
+
+        const entradaISO = formatarDataHora(entrada);
+        const saidaISO = formatarDataHora(saida);
+
+        confirmarReserva(entradaISO, saidaISO);
       }
     });
   };
 
-  const confirmarReserva = () => {
+  const confirmarReserva = (entradaISO, saidaISO) => {
     const token = localStorage.getItem("accessToken");
 
     api
@@ -99,32 +192,56 @@ export default function VagaDetalhes() {
           vagaId: vaga.id,
           estacionamentoId: vaga.estacionamento.id,
           placaVeiculo: placaSelecionada,
-          dataHoraInicio: new Date(entrada).toISOString(),
-          dataHoraFim: new Date(saida).toISOString(),
+          dataHoraInicio: entradaISO,
+          dataHoraFim: saidaISO,
         },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       )
       .then(() => {
         toast.success("Reserva confirmada com sucesso!");
+        navigate("/home-cliente");
       })
-      .catch((err) => {
-        toast.error("Erro ao confirmar reserva.");
+      .catch((error) => {
+        const message = error?.response?.data?.mensagem;
+
+        if (error.response?.status === 409) {
+          toast.warn(
+            message ||
+              "Já existe uma reserva para essa vaga ou placa no período selecionado."
+          );
+        } else {
+          toast.error(message || "Erro ao criar reserva.");
+        }
       });
   };
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
+    setLoading(true);
+    setErroCarregamento(false);
 
     const carregarVaga = async () => {
       try {
         const response = await api.get(`/api/vagas/detalhes/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setVaga(response.data);
+        const vagaData = response.data;
+        setVaga(vagaData);
+
+        if (vagaData.estacionamentoId) {
+          const estResponse = await api.get(
+            `/api/estacionamentos/${vagaData.estacionamentoId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setEstacionamento(estResponse.data);
+        }
       } catch (err) {
-        console.error("Erro ao carregar vaga", err);
+        console.error("Erro ao carregar vaga ou estacionamento", err);
+        setErroCarregamento(true);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -143,93 +260,178 @@ export default function VagaDetalhes() {
     carregarPlacas();
   }, [id]);
 
-  if (!vaga) return <div>Carregando detalhes da vaga...</div>;
+  if (loading) return <div>Carregando detalhes da vaga...</div>;
+  if (erroCarregamento)
+    return (
+      <div className="alert alert-danger">
+        Erro ao carregar os dados da vaga. Tente recarregar a página.
+      </div>
+    );
 
-  const estacionamento = vaga.estacionamento;
+  if (!vaga) return <div>Carregando...</div>;
+
+  const hoje = new Date();
+  console.log("Estacionamento recebido:", vaga.estacionamento);
+
+  if (vaga && vaga.estacionamento) {
+    console.log("horaAbertura:", vaga.estacionamento.horaAbertura);
+    console.log("horaFechamento:", vaga.estacionamento.horaFechamento);
+  }
 
   return (
-    <div className="container mt-4">
-      <h3 className="titulo">{estacionamento.nome}</h3>
-      <div className="vaga-detalhes-grid">
+    <div className="container my-5 vaga-detalhes-container">
+      <h1 className="mb-4">Detalhes da Vaga</h1>
+
+      <div className="card p-4 mb-5">
         <p>
-          <strong>ID da Vaga:</strong> {vaga.id}
+          <strong>Estacionamento:</strong> {vaga.estacionamento.nome}
         </p>
         <p>
-          <strong>Tipo da Vaga:</strong> {vaga.tipo.join(", ")}
+          <strong>Endereço:</strong>{" "}
+          {formatarEndereco(vaga.estacionamento.endereco)}
         </p>
-        <p>
-          <strong>Endereço:</strong> {estacionamento.endereco}
-        </p>
+
         <p>
           <strong>Funcionamento:</strong>{" "}
-          {estacionamento.horaAbertura && estacionamento.horaFechamento
-            ? `${estacionamento.horaAbertura.slice(0, 5)} - ${estacionamento.horaFechamento.slice(0, 5)}`
-            : "Não informado"}
+          {vaga.estacionamento.horaAbertura &&
+          vaga.estacionamento.horaFechamento
+            ? `${vaga.estacionamento.horaAbertura.slice(0, 5)} - ${vaga.estacionamento.horaFechamento.slice(0, 5)}`
+            : "Horário não informado"}
         </p>
 
         <p>
-          <strong>Status:</strong> {vaga.status}
+          <strong>Telefone:</strong> {vaga.estacionamento.telefone}
         </p>
         <p>
-          <strong>Preço por hora:</strong>{" "}
-          {Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          }).format(vaga.preco)}
+          <strong>Preço por hora:</strong> R$ {vaga.preco.toFixed(2)}
+        </p>
+        <p>
+          <strong>Tipo de vaga:</strong> {vaga.tipo.join(", ")}
         </p>
       </div>
 
-      <div className="input-linha">
-        <label className="form-label">Data e Hora de Entrada:</label>
-        <input
-          type="datetime-local"
-          className="form-control"
-          min={agora}
-          value={entrada}
-          onChange={(e) => setEntrada(e.target.value)}
-        />
-      </div>
+      <h2 className="mb-4">Fazer Reserva</h2>
 
-      <div className="input-linha">
-        <label className="form-label">Data e Hora de Saída:</label>
-        <input
-          type="datetime-local"
-          className="form-control"
-          min={entrada || agora}
-          value={saida}
-          onChange={(e) => setSaida(e.target.value)}
-        />
-      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleConfirmarClick();
+        }}
+      >
+        <div className="row mb-3">
+          <div className="col-md-6">
+            <label className="form-label">Data de Entrada:</label>
+            <DatePicker
+              selected={dataEntrada}
+              onChange={(date) => setDataEntrada(date)}
+              locale="pt-BR"
+              dateFormat="dd/MM/yyyy"
+              minDate={hoje}
+              placeholderText="Selecione a data"
+              className="form-control"
+              required
+            />
+          </div>
+          <div className="col-md-6">
+            <label className="form-label">Hora de Entrada:</label>
+            <select
+              value={horaEntrada}
+              onChange={(e) => setHoraEntrada(e.target.value)}
+              className="form-control"
+              required
+              disabled={
+                !dataEntrada ||
+                !vaga.estacionamento.horaAbertura ||
+                !vaga.estacionamento.horaFechamento
+              }
+            >
+              <option value="">Selecione a hora</option>
+              {dataEntrada &&
+                vaga.estacionamento &&
+                vaga.estacionamento.horaAbertura &&
+                vaga.estacionamento.horaFechamento &&
+                gerarHorariosEntre(
+                  vaga.estacionamento.horaAbertura.slice(0, 5),
+                  vaga.estacionamento.horaFechamento.slice(0, 5)
+                ).map((hora) => (
+                  <option key={hora} value={hora}>
+                    {hora}
+                  </option>
+                ))}
+            </select>
+          </div>
+        </div>
 
-      <div className="input-linha">
-        <label className="form-label">Selecione a Placa:</label>
-        <select
-          className="form-select"
-          value={placaSelecionada}
-          onChange={(e) => setPlacaSelecionada(e.target.value)}
-        >
-          <option value="">-- Selecione uma placa --</option>
-          {placas.map((placa, index) => (
-            <option key={index} value={placa}>
-              {placa}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div className="row mb-3">
+          <div className="col-md-6">
+            <label className="form-label">Data de Saída:</label>
+            <DatePicker
+              selected={dataSaida}
+              onChange={(date) => setDataSaida(date)}
+              locale="pt-BR"
+              dateFormat="dd/MM/yyyy"
+              minDate={dataEntrada || hoje}
+              placeholderText="Selecione a data"
+              className="form-control"
+              required
+              disabled={!dataEntrada || !horaEntrada}
+            />
+          </div>
+          <div className="col-md-6">
+            <label className="form-label">Hora de Saída:</label>
+            <select
+              value={horaSaida}
+              onChange={(e) => setHoraSaida(e.target.value)}
+              className="form-control"
+              required
+              disabled={
+                !dataSaida ||
+                !horaEntrada ||
+                !vaga.estacionamento.horaAbertura ||
+                !vaga.estacionamento.horaFechamento
+              }
+            >
+              <option value="">Selecione a hora</option>
+              {dataSaida &&
+                vaga.estacionamento &&
+                vaga.estacionamento.horaAbertura &&
+                vaga.estacionamento.horaFechamento &&
+                gerarHorariosEntre(
+                  vaga.estacionamento.horaAbertura.slice(0, 5),
+                  vaga.estacionamento.horaFechamento.slice(0, 5)
+                ).map((hora) => (
+                  <option key={hora} value={hora}>
+                    {hora}
+                  </option>
+                ))}
+            </select>
+          </div>
+        </div>
 
-      {mensagem && <div className="text-success mt-2">{mensagem}</div>}
+        <div className="mb-3">
+          <label className="form-label">Placa do Veículo:</label>
+          <select
+            value={placaSelecionada}
+            onChange={(e) => setPlacaSelecionada(e.target.value)}
+            className="form-control"
+            required
+          >
+            <option value="">Selecione a placa</option>
+            {Array.isArray(placas) &&
+              placas.map((placa) => (
+                <option key={placa} value={placa}>
+                  {placa}
+                </option>
+              ))}
+          </select>
+        </div>
 
-      <div className="actions">
-        <button className="btn btn-azul" onClick={handleConfirmarClick}>
+        {mensagem && <div className="alert alert-danger">{mensagem}</div>}
+
+        <button type="submit" className="btn btn-success w-100">
           Confirmar Reserva
         </button>
-        <button
-          className="btn btn-secondary"
-          onClick={() => navigate("/home-cliente")}
-        >
-          Voltar para Home
-        </button>
-      </div>
+      </form>
     </div>
   );
 }

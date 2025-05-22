@@ -3,6 +3,7 @@ package br.com.findpark.exceptions.handler;
 import br.com.findpark.exceptions.RespostaException;
 import br.com.findpark.exceptions.email.EnvioEmailException;
 import br.com.findpark.exceptions.jwt.TokenValidationException;
+import br.com.findpark.exceptions.reserva.ReservaConflitanteException;
 import br.com.findpark.exceptions.usuario.RecursoJaExisteException;
 import br.com.findpark.exceptions.usuario.RecursoNaoEncontradoException;
 import br.com.findpark.exceptions.usuario.UsuarioSenhaInvalidaException;
@@ -82,5 +83,14 @@ public class TratadorDeExcecoes extends ResponseEntityExceptionHandler {
                 ex.getMessage(),
                 requisicao.getDescription(false));
         return new ResponseEntity<>(resposta, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(ReservaConflitanteException.class)
+    public final ResponseEntity<RespostaException> tratarReservaConflitanteException(Exception ex, WebRequest requisicao) {
+        RespostaException resposta = new RespostaException(
+                new Date(),
+                ex.getMessage(),
+                requisicao.getDescription(false));
+        return new ResponseEntity<>(resposta, HttpStatus.CONFLICT);
     }
 }
