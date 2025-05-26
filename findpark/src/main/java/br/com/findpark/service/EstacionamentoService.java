@@ -9,11 +9,15 @@ import br.com.findpark.entities.enums.vagas.StatusVaga;
 import br.com.findpark.exceptions.usuario.RecursoNaoEncontradoException;
 import br.com.findpark.repositories.EstacionamentoRepository;
 import br.com.findpark.repositories.VagaRepository;
+import br.com.findpark.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.text.Normalizer;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class EstacionamentoService {
@@ -33,55 +37,56 @@ public class EstacionamentoService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado com id " + id));
     }
 
-    public List<Estacionamento> buscarPorProprietario(String idProprietario) {
-        return estacionamentoRepository.findAllByIdProprietario(idProprietario);
+    public Page<Estacionamento> buscarPorProprietario(Pageable pageable) {
+        String idProprietario = SecurityUtils.getCurrentUsuario().getId();
+        return estacionamentoRepository.findAllByIdProprietario(idProprietario, pageable);
     }
 
-    public List<Estacionamento> buscarTodosEstacionamentos() {
-        return estacionamentoRepository.findAll();
+    public Page<Estacionamento> buscarTodosEstacionamentos(Pageable pageable) {
+        return estacionamentoRepository.findAll(pageable);
     }
 
-    public DetalhesEstacionamentoDto buscarComVagasDisponiveis(String id) {
-        Estacionamento est = estacionamentoRepository.findById(id)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado"));
+    public Page<DetalhesEstacionamentoDto> buscarComVagasDisponiveis(String id, Pageable pageable) {
+        Page<Estacionamento> estacionamentosPage;
 
-        List<Vaga> vagasLivres = vagaRepository.findByEstacionamentoIdAndStatus(id, StatusVaga.LIVRE);
+        if (id != null && !id.isEmpty()) {
+            Estacionamento est = estacionamentoRepository.findById(id)
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado"));
 
-        List<VagaDto> vagaDtos = vagasLivres.stream()
-                .map(v -> new VagaDto(v.getId(), v.getTipo(), v.getPreco()))
-                .toList();
+            estacionamentosPage = new PageImpl<>(List.of(est), pageable, 1);
+        } else {
+            estacionamentosPage = estacionamentoRepository.findAll(pageable);
+        }
 
-        return new DetalhesEstacionamentoDto(
-                est.getId(),
-                est.getNome(),
-                est.getEndereco(),
-                est.getTelefone(),
-                est.getCapacidade(),
-                vagasLivres.size(),
-                est.getHoraAbertura().toString(),
-                est.getHoraFechamento().toString(),
-                vagaDtos
-        );
+        if (estacionamentosPage.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Nenhum estacionamento encontrado.");
+        }
+
+        List<DetalhesEstacionamentoDto> estacionamentoDtos = estacionamentosPage.stream()
+                .map(est -> {
+                    Page<Vaga> vagasLivres = vagaRepository.findByEstacionamentoIdAndStatus(est.getId(), StatusVaga.LIVRE, pageable);
+
+                    List<VagaDto> vagaDtos = vagasLivres.stream()
+                            .map(v -> new VagaDto(v.getId(), v.getTipo(), v.getPreco()))
+                            .collect(Collectors.toList());
+
+                    return new DetalhesEstacionamentoDto(
+                            est.getId(),
+                            est.getNome(),
+                            est.getEndereco(),
+                            est.getTelefone(),
+                            est.getCapacidade(),
+                            vagasLivres.getNumberOfElements(),
+                            est.getHoraAbertura().toString(),
+                            est.getHoraFechamento().toString(),
+                            vagaDtos
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(estacionamentoDtos, pageable, estacionamentosPage.getTotalElements());
     }
 
-    private DetalhesEstacionamentoDto converterParaDetalhesDto(Estacionamento est) {
-        List<VagaDto> vagaDtos = vagaRepository.findByEstacionamentoIdAndStatus(est.getId(), StatusVaga.LIVRE)
-                .stream()
-                .map(v -> new VagaDto(v.getId(), v.getTipo(), v.getPreco()))
-                .toList();
-
-        return new DetalhesEstacionamentoDto(
-                est.getId(),
-                est.getNome(),
-                est.getEndereco(),
-                est.getTelefone(),
-                est.getCapacidade(),
-                vagaDtos.size(),
-                est.getHoraAbertura().toString(),
-                est.getHoraFechamento().toString(),
-                vagaDtos
-        );
-    }
 
     public void atualizarEstacionamento(Estacionamento estacionamento, AtualizarEstacionamentoDto dto) {
         if (dto.nome() != null) estacionamento.setNome(dto.nome());

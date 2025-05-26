@@ -1,0 +1,55 @@
+/* styles.css */
+
+.reserva-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.reserva-card {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.reserva-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.reserva-bloco {
+  flex: 1 1 30%;
+  margin: 0.5rem;
+  min-width: 250px;
+}
+
+.reserva-bloco p,
+.reserva-bloco h5 {
+  margin-bottom: 0.5rem;
+}
+
+.btn-sm {
+  font-size: 0.875rem;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.reserva-card[data-status="ATIVA"] {
+  border-left: 6px solid #198754;
+}
+
+.reserva-card[data-status="CANCELADA"] {
+  border-left: 6px solid #dc3545;
+}
+
+.reserva-card[data-status="FINALIZADA"] {
+  border-left: 6px solid #0d6efd;
+}

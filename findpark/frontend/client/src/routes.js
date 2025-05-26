@@ -22,6 +22,7 @@ import Perfil from "./pages/Perfil";
 import TrocarSenha from "./pages/TrocarSenha"
 import AlterarEmail from "./pages/AlterarEmail"; 
 import NovoEstacionamento from "./pages/NovoEstacionamento";
+import ReservasProprietario from "./pages/ReservasProprietario";
 
 export default function AppRoutes() {
   return (
@@ -52,6 +53,7 @@ export default function AppRoutes() {
           <Route path="/trocar-senha" element={<TrocarSenha />} />
           <Route path="/alterar-email" element={<AlterarEmail />} />
           <Route path="/estacionamentos/novo" element={<NovoEstacionamento />} />
+          <Route path="/reservas-proprietario" element={<ReservasProprietario />} />
         </Route>
       </Routes>
     </BrowserRouter>

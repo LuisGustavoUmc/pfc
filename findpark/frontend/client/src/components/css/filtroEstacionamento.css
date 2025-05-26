@@ -1,0 +1,16 @@
+.form-control-dark {
+  background-color: transparent;
+  border: 1px solid #6c757d; /* borda mais escura que o padrão Bootstrap */
+  color: #212529;
+}
+
+.form-control-dark::placeholder {
+  color: #6c757d;
+}
+
+.form-control-dark:focus {
+  background-color: transparent;
+  border-color: #495057;
+  box-shadow: none;
+  color: #212529;
+}

@@ -35,7 +35,6 @@ const NovoEstacionamento = () => {
     const { name, value } = e.target;
 
     if (name === "numero") {
-      // Atualiza apenas o número dentro do endereço
       setForm((prev) => ({
         ...prev,
         endereco: {
@@ -43,8 +42,13 @@ const NovoEstacionamento = () => {
           numero: value,
         },
       }));
+    } else if (name === "cep") {
+      const cepLimpo = value.replace(/\D/g, "").slice(0, 8); // apenas números, máx. 8
+      setForm((prev) => ({
+        ...prev,
+        cep: cepLimpo,
+      }));
     } else {
-      // Atualiza qualquer outro campo fora do objeto endereco
       setForm((prev) => ({
         ...prev,
         [name]: value,
@@ -74,7 +78,7 @@ const NovoEstacionamento = () => {
           ...prev,
           cep: res.data.cep || prev.cep,
           endereco: {
-            ...prev.endereco, 
+            ...prev.endereco,
             cep: res.data.cep || "",
             logradouro: res.data.logradouro || "",
             complemento: res.data.complemento || "",
@@ -96,7 +100,6 @@ const NovoEstacionamento = () => {
         alert("Erro ao buscar endereço pelo CEP.");
       });
   };
-
 
   const handleSubmit = (e) => {
     e.preventDefault();

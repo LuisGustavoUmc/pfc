@@ -76,7 +76,7 @@ public class AuthService {
         Usuario usuario = usuarioService.buscarPorEmail(dto.email())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario não encontrado!"));
 
-        String token = tokenService.generateAccessToken(usuario, 0, 30); // 30 minutos de validade
+        String token = tokenService.generateAccessToken(usuario, 0, 30);
 
         Context context = new Context();
         context.setVariable("name", usuario.getNome());

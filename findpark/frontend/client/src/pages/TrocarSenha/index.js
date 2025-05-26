@@ -40,37 +40,51 @@ export default function TrocarSenha() {
   };
 
   return (
-    <div className="form-container">
-      <h2>Alterar Senha</h2>
+    <div className="container py-4" style={{ maxWidth: "480px" }}>
+      <h2 className="mb-4 text-center text-dark fs-4">Alterar Senha</h2>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Senha Atual:</label>
+      <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+        <div className="form-group">
+          <label htmlFor="senhaAtual" className="form-label text-dark small">
+            <i className="fas fa-lock me-2"></i>Senha Atual:
+          </label>
           <input
+            id="senhaAtual"
             type="password"
             name="senhaAtual"
+            className="form-control form-control-lg"
             value={form.senhaAtual}
             onChange={handleChange}
             required
+            autoComplete="current-password"
           />
         </div>
 
-        <div>
-          <label>Nova Senha:</label>
+        <div className="form-group">
+          <label htmlFor="novaSenha" className="form-label text-dark small">
+            <i className="fas fa-key me-2"></i>Nova Senha:
+          </label>
           <input
+            id="novaSenha"
             type="password"
             name="novaSenha"
+            className="form-control form-control-lg"
             value={form.novaSenha}
             onChange={handleChange}
             required
+            autoComplete="new-password"
           />
         </div>
 
-        <button type="submit">Alterar Senha</button>
+        <button type="submit" className="btn btn-primary btn-lg mt-3">
+          Alterar Senha
+        </button>
       </form>
 
-      {mensagem && <p className="success">{mensagem}</p>}
-      {erro && <p className="error">{erro}</p>}
+      {mensagem && (
+        <p className="text-success mt-3 text-center small">{mensagem}</p>
+      )}
+      {erro && <p className="text-danger mt-3 text-center small">{erro}</p>}
     </div>
   );
 }

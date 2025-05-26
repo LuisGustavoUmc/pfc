@@ -7,10 +7,15 @@ import br.com.findpark.dtos.usuarios.AtualizarUsuarioDto;
 import br.com.findpark.dtos.usuarios.RegistrarUsuarioDto;
 import br.com.findpark.entities.Usuario;
 
+import br.com.findpark.entities.Vaga;
 import br.com.findpark.exceptions.usuario.RecursoNaoEncontradoException;
 import br.com.findpark.security.SecurityUtils;
 import br.com.findpark.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +46,17 @@ public class UsuarioController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(usuarioCriado);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<Usuario>> buscarTodos(
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "12") Integer size,
+            @RequestParam(value = "direction", defaultValue = "asc") String direction
+    ) {
+        var sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "nome"));
+        return ResponseEntity.ok(usuarioService.buscarTodos(pageable));
     }
 
     @PatchMapping()

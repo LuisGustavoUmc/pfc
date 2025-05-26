@@ -10,7 +10,6 @@ const ReservaDetalhes = () => {
   const [abaAtiva, setAbaAtiva] = useState("ATIVA");
   const [paginaAtual, setPaginaAtual] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
-  const tamanhoPagina = 10; // Número de reservas por página
 
   useEffect(() => {
     buscarReservas();
@@ -19,10 +18,10 @@ const ReservaDetalhes = () => {
   const buscarReservas = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/api/reservas", {
+      const response = await api.get("/api/reservas/proprietario", {
         params: {
           page: paginaAtual,
-          size: tamanhoPagina,
+          size: 10,
           direction: "asc",
           status: abaAtiva,
         },
@@ -32,7 +31,6 @@ const ReservaDetalhes = () => {
     } catch (error) {
       console.error("Erro ao buscar reservas:", error);
       setReservas([]);
-      setTotalPaginas(0);
     } finally {
       setLoading(false);
     }
@@ -98,7 +96,7 @@ const ReservaDetalhes = () => {
   const renderPaginacao = () => (
     <div className="d-flex justify-content-between align-items-center mt-4">
       <button
-        className="btn btn-outline-primary btn-sm"
+      className="btn btn-outline-primary btn-sm"
         onClick={() => setPaginaAtual((prev) => prev - 1)}
         disabled={paginaAtual === 0}
       >
@@ -108,9 +106,9 @@ const ReservaDetalhes = () => {
         Página {paginaAtual + 1} de {totalPaginas}
       </span>
       <button
-        className="btn btn-outline-primary btn-sm"
+      className="btn btn-outline-primary btn-sm"
+        disabled={paginaAtual >= totalPaginas - 1}
         onClick={() => setPaginaAtual((prev) => prev + 1)}
-        disabled={paginaAtual + 1 >= totalPaginas}
       >
         Próxima
       </button>
@@ -122,7 +120,8 @@ const ReservaDetalhes = () => {
       <div className="accordion" id="accordionReservas">
         {reservas.map((reserva, index) => {
           const duracaoHoras =
-            (new Date(reserva.dataHoraFim) - new Date(reserva.dataHoraInicio)) / (1000 * 60 * 60);
+            (new Date(reserva.dataHoraFim) - new Date(reserva.dataHoraInicio)) /
+            (1000 * 60 * 60);
           const totalEstimado = reserva.vaga?.preco
             ? (duracaoHoras * reserva.vaga.preco).toFixed(2)
             : "-";
@@ -153,67 +152,30 @@ const ReservaDetalhes = () => {
                     {/* Bloco Estacionamento */}
                     <div className="reserva-bloco">
                       <h5>{reserva.estacionamento?.nome || "Estacionamento não informado"}</h5>
-                      <p>
-                        <strong>Endereço:</strong>{" "}
-                        {reserva.estacionamento?.endereco
-                          ? formatarEndereco(reserva.estacionamento.endereco)
-                          : "-"}
-                      </p>
-                      <p>
-                        <strong>Telefone:</strong> {reserva.estacionamento?.telefone || "-"}
-                      </p>
-                      <p>
-                        <strong>Horário:</strong>{" "}
-                        {reserva.estacionamento
-                          ? `${reserva.estacionamento.horaAbertura} - ${reserva.estacionamento.horaFechamento}`
-                          : "-"}
-                      </p>
+                      <p><strong>Endereço:</strong> {reserva.estacionamento?.endereco ? formatarEndereco(reserva.estacionamento.endereco) : "-"}</p>
+                      <p><strong>Telefone:</strong> {reserva.estacionamento?.telefone || "-"}</p>
+                      <p><strong>Horário de funcionamento:</strong> {reserva.estacionamento ? `${reserva.estacionamento.horaAbertura} - ${reserva.estacionamento.horaFechamento}` : " -"}</p>
                     </div>
 
                     {/* Bloco Vaga */}
                     <div className="reserva-bloco">
-                      <p>
-                        <strong>Vaga ID:</strong> {reserva.vaga?.id || "-"}
-                      </p>
-                      <p>
-                        <strong>Tipo:</strong> {reserva.vaga?.tipo?.join(", ") || "-"}
-                      </p>
-                      <p>
-                        <strong>Preço/h:</strong>{" "}
-                        {reserva.vaga?.preco !== undefined
-                          ? `R$ ${reserva.vaga.preco.toFixed(2)}`
-                          : "-"}
-                      </p>
-                      {reserva.dataHoraInicio &&
-                        reserva.dataHoraFim &&
-                        reserva.vaga?.preco !== undefined && (
-                          <>
-                            <p>
-                              <strong>Duração:</strong> {duracaoHoras.toFixed(2)} hora(s)
-                            </p>
-                            <p>
-                              <strong>Total estimado:</strong> R$ {totalEstimado}
-                            </p>
-                          </>
-                        )}
+                      <p><strong>Vaga ID:</strong> {reserva.vaga?.id || "-"}</p>
+                      <p><strong>Tipo de vaga:</strong> {reserva.vaga?.tipo?.join(", ") || "-"}</p>
+                      <p><strong>Preço por hora:</strong> {reserva.vaga?.preco !== undefined ? `R$ ${reserva.vaga.preco.toFixed(2)}` : "-"}</p>
+                      {reserva.dataHoraInicio && reserva.dataHoraFim && reserva.vaga?.preco !== undefined && (
+                        <>
+                          <p><strong>Duração estimada:</strong> {duracaoHoras.toFixed(2)} hora(s)</p>
+                          <p><strong>Total estimado:</strong> R$ {totalEstimado}</p>
+                        </>
+                      )}
                     </div>
 
                     {/* Bloco Dados da Reserva */}
                     <div className="reserva-bloco">
-                      <p>
-                        <strong>Placa:</strong> {reserva.placaVeiculo}
-                      </p>
-                      <p>
-                        <strong>Início:</strong>{" "}
-                        {new Date(reserva.dataHoraInicio).toLocaleString()}
-                      </p>
-                      <p>
-                        <strong>Fim:</strong>{" "}
-                        {new Date(reserva.dataHoraFim).toLocaleString()}
-                      </p>
-                      <p>
-                        <strong>Status:</strong> {reserva.status}
-                      </p>
+                      <p><strong>Placa do veículo:</strong> {reserva.placaVeiculo}</p>
+                      <p><strong>Início:</strong> {new Date(reserva.dataHoraInicio).toLocaleString()}</p>
+                      <p><strong>Fim:</strong> {new Date(reserva.dataHoraFim).toLocaleString()}</p>
+                      <p><strong>Status:</strong> {reserva.status}</p>
 
                       {reserva.status === "ATIVA" && (
                         <button
@@ -231,7 +193,6 @@ const ReservaDetalhes = () => {
           );
         })}
       </div>
-
       {totalPaginas > 1 && renderPaginacao()}
     </>
   );

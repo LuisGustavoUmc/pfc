@@ -46,7 +46,9 @@ const CadastrarVaga = () => {
       })
       .catch((err) => {
         console.error("Erro ao cadastrar vaga:", err);
-        alert("Erro ao cadastrar vaga.");
+        const mensagem =
+          err.response?.data?.message || "Erro ao cadastrar vaga.";
+        alert(mensagem);
       });
   };
 
@@ -95,7 +97,6 @@ const CadastrarVaga = () => {
           </div>
         </div>
 
-
         <label className="block">
           Status:
           <select
@@ -112,13 +113,9 @@ const CadastrarVaga = () => {
           </select>
         </label>
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-        >
+        <button type="submit" className="btn btn-primary">
           Cadastrar Vaga
         </button>
-
       </form>
     </div>
   );

@@ -2,6 +2,8 @@ package br.com.findpark.repositories;
 
 import br.com.findpark.dtos.reservas.StatusReserva;
 import br.com.findpark.entities.Reserva;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.time.LocalDateTime;
@@ -9,7 +11,8 @@ import java.util.List;
 
 
 public interface ReservaRepository extends MongoRepository<Reserva, String> {
-    List<Reserva> findByClienteId(String clienteId);
+    Page<Reserva> findByClienteIdAndStatus(String clienteId, StatusReserva status, Pageable pageable);
+    Page<Reserva> findByClienteId(String clienteId, Pageable pageable);
 
     boolean existsByVagaIdAndStatusAndDataHoraFimAfterAndDataHoraInicioBefore(
             String vagaId,
@@ -24,4 +27,8 @@ public interface ReservaRepository extends MongoRepository<Reserva, String> {
             LocalDateTime dataHoraInicio,
             LocalDateTime dataHoraFim
     );
+
+    Page<Reserva> findByEstacionamentoIdIn(List<String> estacionamentoIds, Pageable pageable);
+
+    Page<Reserva> findByEstacionamentoIdInAndStatus(List<String> estacionamentoIds, StatusReserva status, Pageable pageable);
 }

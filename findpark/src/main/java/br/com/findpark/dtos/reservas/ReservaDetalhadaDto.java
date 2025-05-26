@@ -12,6 +12,7 @@ public record ReservaDetalhadaDto(
         LocalDateTime dataHoraFim,
         StatusReserva status,
         DetalhesEstacionamentoDto estacionamento,
-        VagaDto vaga
+        VagaDto vaga,
+        String nomeCliente
 ) {}
 

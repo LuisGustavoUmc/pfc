@@ -5,6 +5,12 @@ import br.com.findpark.entities.Vaga;
 import br.com.findpark.entities.enums.vagas.StatusVaga;
 import br.com.findpark.service.VagaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,13 +33,25 @@ public class VagaController {
     }
 
     @GetMapping
-    public List<Vaga> buscarTodas() {
-        return vagaService.buscarTodas();
+    public ResponseEntity<Page<Vaga>> buscarTodas(
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "12") Integer size,
+            @RequestParam(value = "direction", defaultValue = "asc") String direction
+    ) {
+        var sortDirection = "desc".equalsIgnoreCase(direction) ? Direction.DESC : Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "tipo"));
+        return ResponseEntity.ok(vagaService.buscarTodas(pageable));
     }
 
     @GetMapping("/disponiveis")
-    public List<VagaComEstacionamentoDto> buscarVagasDisponiveisComEstacionamento() {
-        return vagaService.buscarVagasComEstacionamento();
+    public ResponseEntity<Page<VagaComEstacionamentoDto>> buscarVagasDisponiveisComEstacionamento(
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "12") Integer size,
+            @RequestParam(value = "direction", defaultValue = "asc") String direction
+    ) {
+        var sortDirection = "desc".equalsIgnoreCase(direction) ? Direction.DESC : Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "tipo"));
+        return ResponseEntity.ok(vagaService.buscarVagasComEstacionamento(pageable));
     }
 
     @GetMapping("/detalhes/{id}")
@@ -42,18 +60,39 @@ public class VagaController {
     }
 
     @GetMapping("/filtrar")
-    public List<Vaga> buscarVagasFiltradas(@RequestParam String termo) {
-        return vagaService.buscarPorTermo(termo);
+    public ResponseEntity<Page<VagaComEstacionamentoDto>> buscarVagasFiltradas(
+            @RequestParam String termo,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "12") Integer size,
+            @RequestParam(value = "direction", defaultValue = "asc") String direction
+    ) {
+        var sortDirection = "desc".equalsIgnoreCase(direction) ? Direction.DESC : Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "tipo"));
+        return ResponseEntity.ok(vagaService.buscarPorTermo(termo, pageable));
     }
 
     @GetMapping("/estacionamento/{estacionamentoId}")
-    public List<Vaga> buscarPorEstacionamento(@PathVariable String estacionamentoId) {
-        return vagaService.buscarPorEstacionamento(estacionamentoId);
+    public ResponseEntity<Page<Vaga>> buscarPorEstacionamento(
+            @PathVariable String estacionamentoId,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "12") Integer size,
+            @RequestParam(value = "direction", defaultValue = "asc") String direction
+    ) {
+        var sortDirection = "desc".equalsIgnoreCase(direction) ? Direction.DESC : Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "tipo"));
+        return ResponseEntity.ok(vagaService.buscarPorEstacionamento(estacionamentoId, pageable));
     }
 
     @GetMapping("/estacionamento/{estacionamentoId}/status/{status}")
-    public List<Vaga> buscarPorEstacionamentoEStatus(@PathVariable String estacionamentoId, @PathVariable StatusVaga status) {
-        return vagaService.buscarPorEstacionamentoEStatus(estacionamentoId, status);
+    public Page<Vaga> buscarPorEstacionamentoEStatus(
+            @PathVariable String estacionamentoId,
+            @PathVariable StatusVaga status,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "12") Integer size,
+            @RequestParam(value = "direction", defaultValue = "asc") String direction) {
+        var sortDirection = "desc".equalsIgnoreCase(direction) ? Direction.DESC : Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "tipo"));
+        return vagaService.buscarPorEstacionamentoEStatus(estacionamentoId, status, pageable);
     }
 
     @PutMapping("/{id}")

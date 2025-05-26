@@ -58,35 +58,50 @@ export default function Perfil() {
   }
 
   return (
-    <div className="perfil-container">
-      <h2>Perfil</h2>
+    <div className="container py-5">
+      <h2 className="mb-4 fs-4 text-dark">
+        <i className="fas fa-user-circle me-2"></i>Meu Perfil
+      </h2>
 
       {mensagem && <div className="alert alert-success">{mensagem}</div>}
       {erro && <div className="alert alert-danger">{erro}</div>}
 
-      <form onSubmit={handleSalvarDados} className="form-perfil">
-        <div>
-          <label>Nome:</label>
+      <form onSubmit={handleSalvarDados} className="w-100">
+        <div className="mb-3">
+          <label className="form-label text-dark fs-6">
+            <i className="fas fa-user me-2"></i>Nome
+          </label>
           <input
             type="text"
+            className="form-control form-control-md"
             value={usuario.nome}
             onChange={(e) => setUsuario({ ...usuario, nome: e.target.value })}
             required
           />
         </div>
 
-        <div>
-          <label>Email:</label>
-          <input type="email" value={usuario.email} readOnly />
-          <p>
-            <Link to="/alterar-email">Alterar e-mail em outra página</Link>
-          </p>
+        <div className="mb-3">
+          <label className="form-label text-dark fs-6">
+            <i className="fas fa-envelope me-2"></i>Email
+          </label>
+          <input
+            type="email"
+            className="form-control form-control-md"
+            value={usuario.email}
+            readOnly
+          />
+          <small className="form-text text-dark fs-6">
+            <Link to="/alterar-email">Alterar e-mail</Link>
+          </small>
         </div>
 
-        <div>
-          <label>Telefone:</label>
+        <div className="mb-4">
+          <label className="form-label text-dark fs-6">
+            <i className="fas fa-phone me-2"></i>Telefone
+          </label>
           <input
             type="tel"
+            className="form-control form-control-md"
             value={usuario.telefone}
             onChange={(e) =>
               setUsuario({ ...usuario, telefone: e.target.value })
@@ -94,16 +109,28 @@ export default function Perfil() {
           />
         </div>
 
-        <button type="submit">Salvar Dados</button>
+        <div className="d-grid gap-2">
+          <button type="submit" className="btn btn-primary btn-md">
+            <i className="fas fa-save me-2"></i>Salvar Dados
+          </button>
+        </div>
       </form>
 
-      <p>
-        <a href="/trocar-senha">Trocar senha em outra página</a>
-      </p>
+      <div className="mt-5 d-flex gap-3 justify-content-center">
+        <Link
+          to="/trocar-senha"
+          className="btn btn-outline-secondary d-flex align-items-center fs-6 text-dark"
+        >
+          <i className="fas fa-key me-2"></i> Trocar senha
+        </Link>
 
-      <button onClick={handleExcluirConta} className="btn-excluir">
-        Excluir Conta
-      </button>
+        <button
+          onClick={handleExcluirConta}
+          className="btn btn-outline-danger d-flex align-items-center fs-6"
+        >
+          <i className="fas fa-trash-alt me-2"></i> Excluir Conta
+        </button>
+      </div>
     </div>
   );
 }

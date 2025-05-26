@@ -1,5 +1,6 @@
 package br.com.findpark.exceptions.handler;
 
+import br.com.findpark.exceptions.RequisicaoInvalidaException;
 import br.com.findpark.exceptions.RespostaException;
 import br.com.findpark.exceptions.email.EnvioEmailException;
 import br.com.findpark.exceptions.jwt.TokenValidationException;
@@ -92,5 +93,14 @@ public class TratadorDeExcecoes extends ResponseEntityExceptionHandler {
                 ex.getMessage(),
                 requisicao.getDescription(false));
         return new ResponseEntity<>(resposta, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(RequisicaoInvalidaException.class)
+    public final ResponseEntity<RespostaException> tratarRequisicaoInvalidaException(Exception ex, WebRequest requisicao) {
+        RespostaException resposta = new RespostaException(
+                new Date(),
+                ex.getMessage(),
+                requisicao.getDescription(false));
+        return new ResponseEntity<>(resposta, HttpStatus.BAD_REQUEST);
     }
 }

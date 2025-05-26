@@ -10,6 +10,8 @@ import br.com.findpark.exceptions.usuario.RecursoJaExisteException;
 import br.com.findpark.repositories.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -52,6 +54,10 @@ public class UsuarioService {
         usuarioRepository.save(novoUsuario);
         enviarEmailConfirmacao(novoUsuario);
         return novoUsuario;
+    }
+
+    public Page<Usuario> buscarTodos(Pageable pageable) {
+        return usuarioRepository.findAll(pageable);
     }
 
     public void salvar(Usuario usuario) {

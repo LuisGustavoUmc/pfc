@@ -1,0 +1,16 @@
+.perfil-container h2 {
+  font-weight: 600;
+}
+
+.perfil-container .card {
+  border-radius: 0.75rem;
+  background-color: #f8f9fa;
+}
+
+.perfil-container .form-label {
+  font-weight: 500;
+}
+
+.perfil-container .btn-outline-danger {
+  border-width: 2px;
+}

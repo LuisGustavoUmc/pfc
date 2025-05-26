@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./css/styles.css";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
-
-  const { estacionamentoId } = useParams();
 
   function toggleSidebar() {
     setExpanded(!expanded);
@@ -86,14 +84,14 @@ export default function Sidebar() {
             <>
               <li className="sidebar-item">
                 <Link to="/home-proprietario" className="sidebar-link">
-                  <i className="lni lni-map-marker"></i>
-                  <span>Meus Estacionamentos</span>
+                  <i class="fa-solid fa-square-parking"></i>
+                  <span>Estacionamentos</span>
                 </Link>
               </li>
               <li className="sidebar-item">
-                <Link to={`/estacionamentos/${estacionamentoId}/gerenciar-vagas`} className="sidebar-link">
-                  <i className="lni lni-parking"></i>
-                  <span>Gerenciar Vagas</span>
+                <Link to="/reservas-proprietario"  className="sidebar-link">
+                  <i className="fa-solid fa-calendar-days"></i>
+                  <span>Reservas</span>
                 </Link>
               </li>
             </>

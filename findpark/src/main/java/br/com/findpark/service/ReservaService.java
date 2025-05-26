@@ -6,22 +6,30 @@ import br.com.findpark.dtos.reservas.StatusReserva;
 import br.com.findpark.dtos.vagas.VagaDto;
 import br.com.findpark.entities.Estacionamento;
 import br.com.findpark.entities.Reserva;
+import br.com.findpark.entities.Usuario;
 import br.com.findpark.entities.Vaga;
 import br.com.findpark.exceptions.reserva.ReservaConflitanteException;
 import br.com.findpark.exceptions.usuario.RecursoNaoEncontradoException;
 import br.com.findpark.repositories.EstacionamentoRepository;
 import br.com.findpark.repositories.ReservaRepository;
+import br.com.findpark.repositories.UsuarioRepository;
 import br.com.findpark.repositories.VagaRepository;
 import br.com.findpark.security.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,10 +42,7 @@ public class ReservaService {
     private VagaRepository vagaRepository;
 
     @Autowired
-    private VagaService vagaService;
-
-    @Autowired
-    private EstacionamentoService estacionamentoService;
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private EstacionamentoRepository estacionamentoRepository;
@@ -61,7 +66,6 @@ public class ReservaService {
         validarHorarioFuncionamento(estacionamento, reserva.getDataHoraInicio());
         validarHorarioFuncionamento(estacionamento, reserva.getDataHoraFim());
 
-        // ✅ Validação de conflito para a mesma vaga no mesmo período
         boolean vagaOcupada = reservaRepository.existsByVagaIdAndStatusAndDataHoraFimAfterAndDataHoraInicioBefore(
                 reserva.getVagaId(),
                 StatusReserva.ATIVA,
@@ -73,7 +77,6 @@ public class ReservaService {
             throw new ReservaConflitanteException("Já existe uma reserva para essa vaga no período selecionado.");
         }
 
-        // ✅ Validação de placa com reserva no mesmo horário (evita duplicidade por veículo)
         boolean placaComReserva = reservaRepository.existsByPlacaVeiculoAndStatusAndDataHoraFimAfterAndDataHoraInicioBefore(
                 reserva.getPlacaVeiculo(),
                 StatusReserva.ATIVA,
@@ -149,39 +152,43 @@ public class ReservaService {
         }
     }
 
-    public List<ReservaDetalhadaDto> listarMinhasReservas() {
+    public Page<ReservaDetalhadaDto> listarMinhasReservas(Pageable pageable, StatusReserva status) {
         String clienteId = SecurityUtils.getCurrentUsuario().getId();
-        List<Reserva> reservas = reservaRepository.findByClienteId(clienteId);
 
-        atualizarStatusReservasExpiradas(reservas);
+        Page<Reserva> reservasPage;
+        if (status != null) {
+            reservasPage = reservaRepository.findByClienteIdAndStatus(clienteId, status, pageable);
+        } else {
+            reservasPage = reservaRepository.findByClienteId(clienteId, pageable);
+        }
 
-        return reservas.stream()
+        atualizarStatusReservasExpiradas(reservasPage.getContent());
+
+        List<ReservaDetalhadaDto> dtos = reservasPage.stream()
                 .map(reserva -> {
-                    Estacionamento estacionamento = null;
-                    Vaga vaga = null;
-
                     try {
-                        estacionamento = buscarEstacionamento(reserva.getEstacionamentoId());
+                        Estacionamento estacionamento = buscarEstacionamento(reserva.getEstacionamentoId());
+                        Vaga vaga = buscarVaga(reserva.getVagaId());
+
+                        if (estacionamento != null && vaga != null) {
+                            return mapearParaDto(reserva, estacionamento, vaga);
+                        }
                     } catch (Exception e) {
-                        log.warn("Estacionamento não encontrado para ID: {}", reserva.getEstacionamentoId());
+                        log.warn("Dados incompletos para reserva {}, ignorada.", reserva.getId());
                     }
-
-                    try {
-                        vaga = buscarVaga(reserva.getVagaId());
-                    } catch (Exception e) {
-                        log.warn("Vaga não encontrada para ID: {}", reserva.getVagaId());
-                    }
-
-                    if (estacionamento == null || vaga == null) {
-                        log.warn("Reserva ignorada devido a dados incompletos. Reserva ID: {}", reserva.getId());
-                        return null;
-                    }
-
-                    return mapearParaDto(reserva, estacionamento, vaga);
+                    return null;
                 })
                 .filter(Objects::nonNull)
                 .toList();
+
+        if (dtos.isEmpty() && reservasPage.hasNext()) {
+            Pageable proximaPagina = pageable.next();
+            return listarMinhasReservas(proximaPagina, status);
+        }
+
+        return new PageImpl<>(dtos, pageable, reservasPage.getTotalElements());
     }
+
 
     private ReservaDetalhadaDto mapearParaDto(Reserva reserva, Estacionamento estacionamento, Vaga vaga) {
         DetalhesEstacionamentoDto estacionamentoDto = new DetalhesEstacionamentoDto(
@@ -202,6 +209,9 @@ public class ReservaService {
                 vaga.getPreco()
         );
 
+        Usuario cliente = usuarioRepository.findById(reserva.getClienteId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente não encontrado para a reserva"));
+
         return new ReservaDetalhadaDto(
                 reserva.getId(),
                 reserva.getPlacaVeiculo(),
@@ -209,8 +219,64 @@ public class ReservaService {
                 reserva.getDataHoraFim(),
                 reserva.getStatus(),
                 estacionamentoDto,
-                vagaDto
+                vagaDto,
+                cliente.getNome()
         );
+    }
+
+    public Page<ReservaDetalhadaDto> listarReservasDosMeusEstacionamentos(Pageable pageable, StatusReserva status) {
+        String proprietarioId = SecurityUtils.getCurrentUsuario().getId();
+
+        // ✅ Buscar todos os estacionamentos do proprietário (sem paginação aqui!)
+        List<Estacionamento> estacionamentos = estacionamentoRepository
+                .findAllByIdProprietario(proprietarioId, Pageable.unpaged())  // OU crie um método que retorne List<>
+                .getContent();
+
+        if (estacionamentos.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Nenhum estacionamento cadastrado");
+        }
+
+        List<String> estacionamentoIds = estacionamentos.stream()
+                .map(Estacionamento::getId)
+                .toList();
+
+        Page<Reserva> reservasPage;
+
+        if (status != null) {
+            reservasPage = reservaRepository.findByEstacionamentoIdInAndStatus(estacionamentoIds, status, pageable);
+        } else {
+            reservasPage = reservaRepository.findByEstacionamentoIdIn(estacionamentoIds, pageable);
+        }
+
+        if (reservasPage.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Reserva não encontrada");
+        }
+
+        List<ReservaDetalhadaDto> reservasDetalhadasList = reservasPage.stream()
+                .map(reserva -> {
+                    Estacionamento estacionamento = estacionamentos.stream()
+                            .filter(e -> e.getId().equals(reserva.getEstacionamentoId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    Vaga vaga = null;
+                    try {
+                        vaga = buscarVaga(reserva.getVagaId());
+                    } catch (Exception e) {
+                        log.warn("Vaga não encontrada para ID: {}", reserva.getVagaId());
+                    }
+
+                    if (estacionamento == null || vaga == null) {
+                        log.warn("Reserva ignorada devido a dados incompletos. Reserva ID: {}", reserva.getId());
+                        return null;
+                    }
+
+                    return mapearParaDto(reserva, estacionamento, vaga);
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        return new PageImpl<>(reservasDetalhadasList, pageable, reservasPage.getTotalElements());
     }
 
     public Reserva buscarPorId(String id) {

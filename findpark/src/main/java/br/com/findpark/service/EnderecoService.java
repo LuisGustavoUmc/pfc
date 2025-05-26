@@ -8,9 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
-import java.util.List;
-
 @Service
 public class EnderecoService {
 
@@ -34,26 +31,6 @@ public class EnderecoService {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return null;
-        }
-    }
-
-    // ✅ 2. Validar se o CEP existe (para formulário de estacionamento, por exemplo)
-    public boolean validarCepExiste(String cep) {
-        String url = serviceUrl + cep + "/json/";
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-        return response.getBody() != null && !response.getBody().contains("\"erro\": true");
-    }
-
-    // ✅ 3. Buscar lista de endereços por logradouro (opcional para buscas futuras)
-    public List<Endereco> buscarEnderecosPorLogradouro(String uf, String cidade, String logradouro) {
-        String url = serviceUrl + uf + "/" + cidade + "/" + logradouro + "/json/";
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-        try {
-            return objectMapper.readValue(response.getBody(),
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, Endereco.class));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return Collections.emptyList();
         }
     }
 }
