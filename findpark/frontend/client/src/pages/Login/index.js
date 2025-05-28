@@ -129,19 +129,6 @@ export default function Login() {
                 )}
               </div>
               <div className="input-group mb-3 d-flex justify-content-between">
-                <div className="form-check">
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id="formCheck"
-                  />
-                  <label
-                    htmlFor="formCheck"
-                    className="form-check-label text-secondary"
-                  >
-                    <small>Lembrar de mim</small>
-                  </label>
-                </div>
                 <div>
                   <small>
                     <Link to="/recuperar-senha">Esqueceu a senha?</Link>

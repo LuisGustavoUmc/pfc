@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
+import { toast } from "react-toastify";
 
-const CadastrarVaga = () => {
-  const { estacionamentoId } = useParams(); // <- capturando o id da URL
+const CadastrarOuEditarVaga = () => {
+  const { estacionamentoId, vagaId } = useParams(); // <- pega ambos os IDs
   const [vaga, setVaga] = useState({
     status: "LIVRE",
     tipo: [],
@@ -11,12 +12,33 @@ const CadastrarVaga = () => {
     estacionamentoId: "",
   });
 
-  // Atualiza o estado da vaga com o id do estacionamento
+  const navigate = useNavigate();
+  const editando = Boolean(vagaId);
+
+  // Carregar dados da vaga para edição
   useEffect(() => {
-    if (estacionamentoId) {
+    if (editando) {
+      api
+        .get(`/api/vagas/${vagaId}`)
+        .then((res) => {
+          const dados = res.data;
+          const tipos =
+            typeof dados.tipo === "string" ? dados.tipo.split(",") : dados.tipo;
+          setVaga({
+            ...dados,
+            tipo: Array.isArray(tipos)
+              ? tipos.map((t) => t.trim().toUpperCase())
+              : [],
+          });
+        })
+        .catch((err) => {
+          console.error("Erro ao carregar vaga:", err);
+          toast.error("Erro ao carregar dados da vaga.");
+        });
+    } else if (estacionamentoId) {
       setVaga((prev) => ({ ...prev, estacionamentoId }));
     }
-  }, [estacionamentoId]);
+  }, [vagaId, estacionamentoId, editando]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,36 +50,35 @@ const CadastrarVaga = () => {
     const tiposAtualizados = checked
       ? [...vaga.tipo, value]
       : vaga.tipo.filter((t) => t !== value);
-
     setVaga({ ...vaga, tipo: tiposAtualizados });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    api
-      .post("/api/vagas", vaga)
+    const metodo = editando ? api.put : api.post;
+    const url = editando ? `/api/vagas/${vagaId}` : "/api/vagas";
+
+    metodo(url, vaga)
       .then(() => {
-        alert("Vaga cadastrada com sucesso!");
-        setVaga({
-          status: "LIVRE",
-          tipo: [],
-          preco: "",
-          estacionamentoId: estacionamentoId || "",
-        });
+        toast.success(
+          `Vaga ${editando ? "atualizada" : "cadastrada"} com sucesso!`
+        );
+        navigate("/home-proprietario");
       })
       .catch((err) => {
-        console.error("Erro ao cadastrar vaga:", err);
-        const mensagem =
-          err.response?.data?.message || "Erro ao cadastrar vaga.";
-        alert(mensagem);
+        console.error("Erro ao salvar vaga:", err);
+        const msg = err.response?.data?.message || "Erro ao salvar vaga.";
+        toast.error(msg);
       });
   };
 
   return (
     <div className="container py-4" style={{ maxWidth: "600px" }}>
+      
       <h1 className="mb-4 text-center text-dark fs-4">
-        <i className="fas fa-parking me-2"></i>Cadastrar Nova Vaga
+        <i className="fas fa-parking me-2"></i>
+        {editando ? "Editar Vaga" : "Cadastrar Nova Vaga"}
       </h1>
 
       <form onSubmit={handleSubmit} className="d-flex flex-column gap-4">
@@ -73,7 +94,7 @@ const CadastrarVaga = () => {
             onChange={handleChange}
             required
             min="0"
-            step="0.00"
+            step="0.01"
             className="form-control form-control-lg"
           />
         </div>
@@ -88,7 +109,7 @@ const CadastrarVaga = () => {
                 <input
                   type="checkbox"
                   value={tipo}
-                  checked={vaga.tipo.includes(tipo)}
+                  checked={Array.isArray(vaga.tipo) && vaga.tipo.includes(tipo)}
                   onChange={handleTipoChange}
                   className="form-check-input"
                   id={tipo}
@@ -119,11 +140,12 @@ const CadastrarVaga = () => {
         </div>
 
         <button type="submit" className="btn btn-primary btn-lg w-100 mt-3">
-          <i className="fas fa-plus me-2"></i>Cadastrar Vaga
+          <i className={`fas fa-${editando ? "save" : "plus"} me-2`}></i>
+          {editando ? "Salvar Alterações" : "Cadastrar Vaga"}
         </button>
       </form>
     </div>
   );
 };
 
-export default CadastrarVaga;
+export default CadastrarOuEditarVaga;

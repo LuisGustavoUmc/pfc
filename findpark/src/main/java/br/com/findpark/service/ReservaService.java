@@ -57,14 +57,12 @@ public class ReservaService {
         reserva.setClienteId(SecurityUtils.getCurrentUsuario().getId());
         reserva.setStatus(StatusReserva.ATIVA);
 
-        validarDadosIniciais(reserva);
-
+        // Buscar o estacionamento e a vaga ANTES de validar
         Estacionamento estacionamento = buscarEstacionamento(reserva.getEstacionamentoId());
-
         Vaga vaga = buscarVaga(reserva.getVagaId());
+
+        validarReserva(estacionamento, reserva);
         validarVagaPertenceAoEstacionamento(vaga, estacionamento);
-        validarHorarioFuncionamento(estacionamento, reserva.getDataHoraInicio());
-        validarHorarioFuncionamento(estacionamento, reserva.getDataHoraFim());
 
         boolean vagaOcupada = reservaRepository.existsByVagaIdAndStatusAndDataHoraFimAfterAndDataHoraInicioBefore(
                 reserva.getVagaId(),
@@ -93,7 +91,7 @@ public class ReservaService {
         return reservaSalva;
     }
 
-    private void validarDadosIniciais(Reserva reserva) {
+    private void validarReserva(Estacionamento estacionamento, Reserva reserva) {
         if (reserva.getDataHoraInicio() == null) {
             reserva.setDataHoraInicio(LocalDateTime.now());
         }
@@ -108,6 +106,34 @@ public class ReservaService {
 
         if (reserva.getPlacaVeiculo() == null || reserva.getPlacaVeiculo().isBlank()) {
             throw new IllegalArgumentException("A placa do veículo é obrigatória.");
+        }
+
+        LocalTime abertura = estacionamento.getHoraAbertura();
+        LocalTime fechamento = estacionamento.getHoraFechamento();
+
+        if (abertura == null || fechamento == null) {
+            throw new IllegalArgumentException("Horário de funcionamento do estacionamento não está configurado.");
+        }
+
+        boolean is24Horas = abertura.equals(LocalTime.MIDNIGHT) &&
+                (fechamento.equals(LocalTime.MIDNIGHT) || fechamento.equals(LocalTime.of(23, 59)));
+
+        LocalTime horaInicio = reserva.getDataHoraInicio().toLocalTime();
+        LocalTime horaFim = reserva.getDataHoraFim().toLocalTime();
+
+        if (!is24Horas) {
+            // Estacionamento com horário fixo
+            if (horaInicio.isBefore(abertura) || horaInicio.isAfter(fechamento)) {
+                throw new IllegalArgumentException("O horário de início está fora do horário de funcionamento do estacionamento.");
+            }
+
+            if (horaFim.isBefore(abertura) || horaFim.isAfter(fechamento)) {
+                throw new IllegalArgumentException("O horário de fim está fora do horário de funcionamento do estacionamento.");
+            }
+
+            if (!reserva.getDataHoraInicio().toLocalDate().equals(reserva.getDataHoraFim().toLocalDate())) {
+                throw new IllegalArgumentException("Reservas não podem ultrapassar o fechamento diário do estacionamento.");
+            }
         }
     }
 
@@ -136,20 +162,6 @@ public class ReservaService {
                     reserva.setStatus(StatusReserva.FINALIZADA);
                     reservaRepository.save(reserva);
                 });
-    }
-
-    private void validarHorarioFuncionamento(Estacionamento estacionamento, LocalDateTime dataHora) {
-        LocalTime hora = dataHora.toLocalTime();
-        LocalTime abertura = estacionamento.getHoraAbertura();
-        LocalTime fechamento = estacionamento.getHoraFechamento();
-
-        log.info("Validando horário: hora={}, abertura={}, fechamento={}", hora, abertura, fechamento);
-
-        if (hora.isBefore(abertura) || hora.isAfter(fechamento)) {
-            if (!hora.equals(fechamento)) {
-                throw new IllegalArgumentException("O estacionamento estará fechado nesse horário.");
-            }
-        }
     }
 
     public Page<ReservaDetalhadaDto> listarMinhasReservas(Pageable pageable, StatusReserva status) {
@@ -189,7 +201,6 @@ public class ReservaService {
         return new PageImpl<>(dtos, pageable, reservasPage.getTotalElements());
     }
 
-
     private ReservaDetalhadaDto mapearParaDto(Reserva reserva, Estacionamento estacionamento, Vaga vaga) {
         DetalhesEstacionamentoDto estacionamentoDto = new DetalhesEstacionamentoDto(
                 estacionamento.getId(),
@@ -224,7 +235,7 @@ public class ReservaService {
         );
     }
 
-    public Page<ReservaDetalhadaDto> listarReservasDosMeusEstacionamentos(Pageable pageable, StatusReserva status) {
+    public Page<ReservaDetalhadaDto> listarReservasDosMeusEstacionamentos(Pageable pageable, StatusReserva status, String placaVeiculo) {
         String proprietarioId = SecurityUtils.getCurrentUsuario().getId();
 
         // ✅ Buscar todos os estacionamentos do proprietário (sem paginação aqui!)
@@ -275,6 +286,12 @@ public class ReservaService {
                 })
                 .filter(Objects::nonNull)
                 .toList();
+
+        if (placaVeiculo != null && !placaVeiculo.isBlank()) {
+            reservasDetalhadasList = reservasDetalhadasList.stream()
+                    .filter(dto -> dto.placaVeiculo().equalsIgnoreCase(placaVeiculo))
+                    .toList();
+        }
 
         return new PageImpl<>(reservasDetalhadasList, pageable, reservasPage.getTotalElements());
     }

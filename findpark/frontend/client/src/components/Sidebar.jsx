@@ -112,20 +112,6 @@ export default function Sidebar() {
               <span>Perfil</span>
             </Link>
           </li>
-
-          <li className="sidebar-item">
-            <Link to="#" className="sidebar-link">
-              <i className="fa-solid fa-bell"></i>
-              <span>Notificações</span>
-            </Link>
-          </li>
-
-          <li className="sidebar-item">
-            <Link to="#" className="sidebar-link">
-              <i className="fa-solid fa-gear"></i>
-              <span>Configurações</span>
-            </Link>
-          </li>
         </ul>
 
         <div className="sidebar-footer">

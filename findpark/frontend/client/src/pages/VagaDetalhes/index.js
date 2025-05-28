@@ -31,6 +31,8 @@ export default function VagaDetalhes() {
   const [erroCarregamento, setErroCarregamento] = useState(false);
   const [estacionamento, setEstacionamento] = useState(null);
   const [dataEntrada, setDataEntrada] = useState(null);
+
+  useEffect(() => {}, [dataEntrada]);
   const [horaEntrada, setHoraEntrada] = useState("");
   const [dataSaida, setDataSaida] = useState(null);
   const [horaSaida, setHoraSaida] = useState("");
@@ -278,6 +280,14 @@ export default function VagaDetalhes() {
     console.log("horaFechamento:", vaga.estacionamento.horaFechamento);
   }
 
+  const isEstacionamento24h = () => {
+    const abertura = vaga?.estacionamento?.horaAbertura?.slice(0, 5);
+    const fechamento = vaga?.estacionamento?.horaFechamento?.slice(0, 5);
+    return (
+      abertura === "00:00" && (fechamento === "00:00" || fechamento === "23:59")
+    );
+  };
+
   return (
     <div className="container my-5 vaga-detalhes-container">
       <h1 className="mb-4">Detalhes da Vaga</h1>
@@ -352,7 +362,10 @@ export default function VagaDetalhes() {
                 vaga.estacionamento.horaFechamento &&
                 gerarHorariosEntre(
                   vaga.estacionamento.horaAbertura.slice(0, 5),
-                  vaga.estacionamento.horaFechamento.slice(0, 5)
+                  vaga.estacionamento.horaFechamento.slice(0, 5),
+                  false,
+                  null,
+                  dataEntrada
                 ).map((hora) => (
                   <option key={hora} value={hora}>
                     {hora}
@@ -371,10 +384,15 @@ export default function VagaDetalhes() {
               locale="pt-BR"
               dateFormat="dd/MM/yyyy"
               minDate={dataEntrada || hoje}
+              maxDate={
+                !isEstacionamento24h() && dataEntrada ? dataEntrada : null
+              }
               placeholderText="Selecione a data"
               className="form-control"
               required
-              disabled={!dataEntrada || !horaEntrada}
+              disabled={
+                !dataEntrada || (!isEstacionamento24h() && !horaEntrada)
+              }
             />
           </div>
           <div className="col-md-6">
@@ -396,9 +414,14 @@ export default function VagaDetalhes() {
                 vaga.estacionamento &&
                 vaga.estacionamento.horaAbertura &&
                 vaga.estacionamento.horaFechamento &&
+                horaEntrada &&
                 gerarHorariosEntre(
                   vaga.estacionamento.horaAbertura.slice(0, 5),
-                  vaga.estacionamento.horaFechamento.slice(0, 5)
+                  vaga.estacionamento.horaFechamento.slice(0, 5),
+                  true,
+                  horaEntrada,
+                  dataEntrada,
+                  dataSaida
                 ).map((hora) => (
                   <option key={hora} value={hora}>
                     {hora}

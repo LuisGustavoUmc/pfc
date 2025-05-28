@@ -35,11 +35,12 @@ public class ReservaController {
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "12") Integer size,
             @RequestParam(value = "direction", defaultValue = "asc") String direction,
-            @RequestParam(value = "status", required = false) StatusReserva status
+            @RequestParam(value = "status", required = false) StatusReserva status,
+            @RequestParam(value = "placa", required = false) String placa
     ) {
         var sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "dataHoraInicio"));
-        return ResponseEntity.ok(reservaService.listarReservasDosMeusEstacionamentos(pageable, status));
+        return ResponseEntity.ok(reservaService.listarReservasDosMeusEstacionamentos(pageable, status, placa));
     }
 
     @GetMapping

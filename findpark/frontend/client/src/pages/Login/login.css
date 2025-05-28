@@ -13,6 +13,10 @@ a:hover {
   text-decoration: underline;
 }
 
+h3 {
+  color: #06080e	!important;
+}
+
 .btn {
   font-size: 0.8rem;
   font-weight: 700;

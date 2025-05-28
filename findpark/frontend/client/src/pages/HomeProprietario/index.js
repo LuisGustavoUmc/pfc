@@ -122,12 +122,20 @@ const HomeProprietario = () => {
                     {(e.horaFechamento || "").slice(0, 5)}
                   </p>
 
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => handleCadastrarVaga(e.id)}
-                  >
-                    Cadastrar Vaga
-                  </button>
+                  <div className="d-flex gap-2 mt-3">
+                    <Link
+                      to={`/estacionamentos/${e.id}`}
+                      className="btn btn-outline-secondary btn-sm"
+                    >
+                      Ver Detalhes
+                    </Link>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleCadastrarVaga(e.id)}
+                    >
+                      Cadastrar Vaga
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
