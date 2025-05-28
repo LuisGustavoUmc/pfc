@@ -75,7 +75,6 @@ const CadastrarOuEditarVaga = () => {
 
   return (
     <div className="container py-4" style={{ maxWidth: "600px" }}>
-      
       <h1 className="mb-4 text-center text-dark fs-4">
         <i className="fas fa-parking me-2"></i>
         {editando ? "Editar Vaga" : "Cadastrar Nova Vaga"}

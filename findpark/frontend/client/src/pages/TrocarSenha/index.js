@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import api from "../../services/api";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./styles.css"; // se quiser estilizar
 
 export default function TrocarSenha() {
@@ -41,6 +41,12 @@ export default function TrocarSenha() {
 
   return (
     <div className="container py-4" style={{ maxWidth: "480px" }}>
+      <Link
+        to={`/perfil`}
+        className="btn btn-outline-secondary mb-3"
+      >
+        <i className="fas fa-arrow-left me-2"></i>Voltar
+      </Link>
       <h2 className="mb-4 text-center text-dark fs-4">Alterar Senha</h2>
 
       <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">

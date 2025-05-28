@@ -35,6 +35,8 @@ export default function Sidebar() {
     homePath = "/home-cliente";
   } else if (role === "PROPRIETARIO") {
     homePath = "/home-proprietario";
+  } else if (role === "ADMIN") {
+    homePath = "/admin";
   }
 
   return (
@@ -98,12 +100,21 @@ export default function Sidebar() {
           )}
 
           {role === "ADMIN" && (
+            <>
             <li className="sidebar-item">
               <Link to="/admin" className="sidebar-link">
-                <i className="lni lni-cog"></i>
-                <span>Painel Admin</span>
+                <i class="fa-solid fa-gauge"></i>
+                <span>Dashboard</span>
               </Link>
             </li>
+
+            <li className="sidebar-item">
+              <Link to="/usuarios" className="sidebar-link">
+                <i class="fa-solid fa-users"></i>
+                <span>Gerenciar Usuários</span>
+              </Link>
+            </li>
+            </>
           )}
 
           <li className="sidebar-item">

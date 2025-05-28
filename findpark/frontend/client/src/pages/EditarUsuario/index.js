@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import "./styles.css";
 import { toast } from "react-toastify";
 
-export default function Perfil() {
+export default function EditarUsuario() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
   const [usuario, setUsuario] = useState({
     nome: "",
     email: "",
@@ -23,13 +26,16 @@ export default function Perfil() {
     if (numeros.length <= 11)
       return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
 
-    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
+      7,
+      11
+    )}`;
   };
 
   useEffect(() => {
     async function fetchUsuario() {
       try {
-        const res = await api.get("api/usuarios/me");
+        const res = await api.get(`/api/usuarios/${id}`);
         setUsuario({
           nome: res.data.nome,
           email: res.data.email,
@@ -39,8 +45,10 @@ export default function Perfil() {
         setErro("Erro ao carregar dados do usuário");
       }
     }
-    fetchUsuario();
-  }, []);
+    if (id) {
+      fetchUsuario();
+    }
+  }, [id]);
 
   async function handleSalvarDados(e) {
     e.preventDefault();
@@ -52,10 +60,15 @@ export default function Perfil() {
       setErro("Telefone inválido. Informe um número com DDD e até 11 dígitos.");
       return;
     }
-    
+
     try {
+      // A API atual espera patch em /api/usuarios com o token do usuário logado
+      // Se o backend suportar atualizar outro usuário (admin), envie o id como parte do payload
+      // Ajuste conforme sua API permite
       await api.patch("/api/usuarios", usuario);
       setMensagem("Dados atualizados com sucesso!");
+      // Opcional: redirecionar após salvar
+      // navigate("/usuarios");
     } catch (error) {
       setErro("Erro ao atualizar dados");
     }
@@ -63,24 +76,24 @@ export default function Perfil() {
 
   async function handleExcluirConta() {
     const confirma = window.confirm(
-      "Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
+      "Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita."
     );
     if (!confirma) return;
 
     try {
-      await api.delete("/api/usuarios");
-      toast.success("Conta excluída com sucesso!");
-      localStorage.removeItem("accessToken");
-      window.location.href = "/";
+      // Se o endpoint delete só excluir o usuário logado, ajuste seu backend para suportar exclusão de usuário por id (admin)
+      await api.delete(`/api/usuarios/${id}`);
+      toast.success("Usuário excluído com sucesso!");
+      navigate("/usuarios");
     } catch (error) {
-      toast.error("Erro ao excluir conta.");
+      toast.error("Erro ao excluir usuário.");
     }
   }
 
   return (
     <div className="container py-5">
       <h2 className="mb-4 fs-4 text-dark">
-        <i className="fas fa-user-circle me-2"></i>Meu Perfil
+        <i className="fas fa-user-circle me-2"></i>Editar Usuário
       </h2>
 
       {mensagem && <div className="alert alert-success">{mensagem}</div>}
@@ -108,11 +121,13 @@ export default function Perfil() {
             type="email"
             className="form-control form-control-md"
             value={usuario.email}
-            readOnly
+            onChange={(e) => setUsuario({ ...usuario, email: e.target.value })}
+            required
           />
-          <small className="form-text text-dark fs-6">
-            <Link to="/alterar-email">Alterar e-mail</Link>
-          </small>
+          {/* Se quiser link para alterar email, descomente: */}
+          {/* <small className="form-text text-dark fs-6">
+            <Link to={`/usuarios/alterar-email/${id}`}>Alterar e-mail</Link>
+          </small> */}
         </div>
 
         <div className="mb-4">
@@ -140,8 +155,9 @@ export default function Perfil() {
       </form>
 
       <div className="mt-5 d-flex gap-3 justify-content-center">
+        {/* Link para trocar senha - ajuste conforme necessidade */}
         <Link
-          to="/trocar-senha"
+          to={`/usuarios/trocar-senha/${id}`}
           className="btn btn-outline-secondary d-flex align-items-center fs-6 text-dark"
         >
           <i className="fas fa-key me-2"></i> Trocar senha
@@ -151,7 +167,7 @@ export default function Perfil() {
           onClick={handleExcluirConta}
           className="btn btn-outline-danger d-flex align-items-center fs-6"
         >
-          <i className="fas fa-trash-alt me-2"></i> Excluir Conta
+          <i className="fas fa-trash-alt me-2"></i> Excluir Usuário
         </button>
       </div>
     </div>

@@ -96,12 +96,7 @@ export default function HomeCliente() {
           <p className="text-muted">Veja as vagas disponíveis para você:</p>
         </div>
       )}
-
-      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <div></div>
-        {/* Você pode adicionar outros filtros ou ações aqui futuramente */}
-      </div>
-
+      
       <div className="mb-4">
         <FiltroEstacionamento onBuscar={handleBuscar} />
       </div>

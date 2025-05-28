@@ -1,17 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
+import { mostrarTermos } from '../../utils/Utils'; 
 
 export default function NovaConta() {
   const [form, setForm] = useState({
-    nome: '',
-    email: '',
-    senha: '',
-    telefone: '',
-    role: 'CLIENTE',
+    nome: "",
+    email: "",
+    senha: "",
+    telefone: "",
+    role: "CLIENTE",
   });
-  const [confirmarSenha, setConfirmarSenha] = useState('');
-  const [erro, setErro] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [erro, setErro] = useState("");
   const [senhaFocada, setSenhaFocada] = useState(false);
   const navigate = useNavigate();
 
@@ -27,37 +30,70 @@ export default function NovaConta() {
     return Object.values(requisitos).every((r) => r(senha));
   };
 
+  const validarTelefone = (telefone) => {
+    const numeros = telefone.replace(/\D/g, "");
+    return numeros.length === 10 || numeros.length === 11;
+  };
+
+  const formatarTelefone = (valor) => {
+    const numeros = valor.replace(/\D/g, "").slice(0, 11);
+
+    if (numeros.length <= 2) return `(${numeros}`;
+    if (numeros.length <= 7)
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+    if (numeros.length <= 11)
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    const novoValor = name === "telefone" ? formatarTelefone(value) : value;
+    setForm({ ...form, [name]: novoValor });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErro('');
 
-    if (!form.nome || !form.email || !form.telefone || !form.senha) {
-      setErro("Todos os campos são obrigatórios.");
-      return;
-    }
+    mostrarTermos().then(async (result) => {
+      if (result.isConfirmed) {
+        setErro("");
 
-    if (form.senha !== confirmarSenha) {
-      setErro("As senhas não coincidem.");
-      return;
-    }
+        if (!form.nome || !form.email || !form.telefone || !form.senha) {
+          setErro("Todos os campos são obrigatórios.");
+          return;
+        }
 
-    if (!validarSenha(form.senha)) {
-      setErro("A senha não atende aos requisitos.");
-      return;
-    }
+        if (!validarTelefone(form.telefone)) {
+          setErro(
+            "Telefone inválido. Use o formato (99) 99999-9999 ou (99) 9999-9999."
+          );
+          return;
+        }
 
-    try {
-      await api.post("/api/usuarios/registrar", form);
-      alert("Cadastro realizado com sucesso! Verifique seu e-mail para ativar a conta.");
-      navigate("/");
-    } catch (error) {
-      alert("Erro ao cadastrar usuário. Tente novamente.");
-    }
+        if (form.senha !== confirmarSenha) {
+          setErro("As senhas não coincidem.");
+          return;
+        }
+
+        if (!validarSenha(form.senha)) {
+          setErro("A senha não atende aos requisitos.");
+          return;
+        }
+
+        try {
+          await api.post("/api/usuarios/registrar", form);
+          toast.success(
+            "Cadastro realizado com sucesso! Verifique seu e-mail para ativar a conta."
+          );
+          navigate("/");
+        } catch (error) {
+          toast.error("Erro ao cadastrar usuário. Tente novamente.");
+        }
+      }
+      // Se cancelar, não faz nada
+    });
   };
 
   const senha = form.senha;
@@ -70,56 +106,144 @@ export default function NovaConta() {
   };
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "600px" }}>
-      <h3>Criar Nova Conta</h3>
+    <div className="container mt-5" style={{ maxWidth: "700px" }}>
+      <h2 className="mb-4 text-center text-dark">Criar Nova Conta</h2>
       <form onSubmit={handleSubmit}>
+        {/* Nome */}
         <div className="mb-3">
-          <label>Nome</label>
-          <input className="form-control" name="nome" value={form.nome} onChange={handleChange} required />
+          <label className="form-label text-dark">Nome</label>
+          <div className="input-group">
+            <span className="input-group-text">
+              <i className="fas fa-user"></i>
+            </span>
+            <input
+              className="form-control"
+              name="nome"
+              value={form.nome}
+              onChange={handleChange}
+              required
+              placeholder="Seu nome completo"
+            />
+          </div>
         </div>
+
+        {/* Email */}
         <div className="mb-3">
-          <label>Email</label>
-          <input className="form-control" type="email" name="email" value={form.email} onChange={handleChange} required />
+          <label className="form-label text-dark">Email</label>
+          <div className="input-group">
+            <span className="input-group-text">
+              <i className="fas fa-envelope"></i>
+            </span>
+            <input
+              className="form-control"
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              placeholder="email@exemplo.com"
+            />
+          </div>
         </div>
+
+        {/* Telefone */}
         <div className="mb-3">
-          <label>Telefone</label>
-          <input className="form-control" name="telefone" value={form.telefone} onChange={handleChange} required />
+          <label className="form-label text-dark">Telefone</label>
+          <div className="input-group">
+            <span className="input-group-text">
+              <i className="fas fa-phone"></i>
+            </span>
+            <input
+              className="form-control"
+              name="telefone"
+              value={form.telefone}
+              onChange={handleChange}
+              required
+              placeholder="(99) 99999-9999"
+            />
+          </div>
         </div>
+
+        {/* Senha */}
         <div className="mb-3">
-          <label>Senha</label>
-          <input
-            className="form-control"
-            type="password"
-            name="senha"
-            value={form.senha}
-            onChange={handleChange}
-            onFocus={() => setSenhaFocada(true)}
-            onBlur={() => setSenhaFocada(false)}
-            required
-          />
+          <label className="form-label text-dark">Senha</label>
+          <div className="input-group">
+            <span className="input-group-text">
+              <i className="fas fa-lock"></i>
+            </span>
+            <input
+              className="form-control"
+              type="password"
+              name="senha"
+              value={form.senha}
+              onChange={handleChange}
+              onFocus={() => setSenhaFocada(true)}
+              onBlur={() => setSenhaFocada(false)}
+              required
+            />
+          </div>
           {senhaFocada && (
-            <ul className="mt-2">
-              <li className={requisitosStatus.tamanho ? 'text-success' : 'text-danger'}>Mínimo 8 caracteres</li>
-              <li className={requisitosStatus.maiuscula ? 'text-success' : 'text-danger'}>Letra maiúscula</li>
-              <li className={requisitosStatus.minuscula ? 'text-success' : 'text-danger'}>Letra minúscula</li>
-              <li className={requisitosStatus.numero ? 'text-success' : 'text-danger'}>Número</li>
-              <li className={requisitosStatus.especial ? 'text-success' : 'text-danger'}>Caractere especial (@$!%*?&)</li>
+            <ul className="mt-2 small">
+              <li
+                className={
+                  requisitosStatus.tamanho ? "text-success" : "text-danger"
+                }
+              >
+                Mínimo 8 caracteres
+              </li>
+              <li
+                className={
+                  requisitosStatus.maiuscula ? "text-success" : "text-danger"
+                }
+              >
+                Letra maiúscula
+              </li>
+              <li
+                className={
+                  requisitosStatus.minuscula ? "text-success" : "text-danger"
+                }
+              >
+                Letra minúscula
+              </li>
+              <li
+                className={
+                  requisitosStatus.numero ? "text-success" : "text-danger"
+                }
+              >
+                Número
+              </li>
+              <li
+                className={
+                  requisitosStatus.especial ? "text-success" : "text-danger"
+                }
+              >
+                Caractere especial (@$!%*?&)
+              </li>
             </ul>
           )}
         </div>
+
+        {/* Confirmar senha */}
         <div className="mb-3">
-          <label>Confirmar Senha</label>
-          <input
-            className="form-control"
-            type="password"
-            value={confirmarSenha}
-            onChange={(e) => setConfirmarSenha(e.target.value)}
-            required
-          />
+          <label className="form-label text-dark">Confirmar Senha</label>
+          <div className="input-group">
+            <span className="input-group-text">
+              <i className="fas fa-lock"></i>
+            </span>
+            <input
+              className="form-control"
+              type="password"
+              value={confirmarSenha}
+              onChange={(e) => setConfirmarSenha(e.target.value)}
+              required
+            />
+          </div>
         </div>
-        <div className="mb-3">
-          <label>Tipo de Conta</label>
-          <div>
+
+        {/* Tipo de Conta */}
+        <div className="mb-4">
+          <label className="form-label text-dark d-block">Tipo de Conta</label>
+          <div className="form-check form-check-inline mt-2 me-3">
             <input
               type="radio"
               id="cliente"
@@ -127,8 +251,13 @@ export default function NovaConta() {
               value="CLIENTE"
               checked={form.role === "CLIENTE"}
               onChange={handleChange}
+              className="form-check-input"
             />
-            <label htmlFor="cliente" className="ms-1 me-3">Cliente</label>
+            <label htmlFor="cliente" className="form-check-label ms-1">
+              Cliente
+            </label>
+          </div>
+          <div className="form-check form-check-inline mt-2">
             <input
               type="radio"
               id="proprietario"
@@ -136,12 +265,20 @@ export default function NovaConta() {
               value="PROPRIETARIO"
               checked={form.role === "PROPRIETARIO"}
               onChange={handleChange}
+              className="form-check-input"
             />
-            <label htmlFor="proprietario" className="ms-1">Proprietário</label>
+            <label htmlFor="proprietario" className="form-check-label ms-1">
+              Proprietário
+            </label>
           </div>
         </div>
-        <button type="submit" className="btn btn-primary">Cadastrar</button>
+
+        {/* Botão */}
+        <button type="submit" className="btn btn-primary w-100">
+          <i className="fas fa-user-plus me-2"></i> Cadastrar
+        </button>
       </form>
+
       {erro && <div className="alert alert-danger mt-3">{erro}</div>}
     </div>
   );

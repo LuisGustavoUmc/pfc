@@ -2,7 +2,6 @@ import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import Login from './pages/Login';
-import Vaga from "./pages/Vaga";
 import Admin from './pages/Admin'
 import AppLayout from "./components/AppLayout";
 import RecuperarSenha from "./pages/RecuperarSenha";
@@ -22,7 +21,7 @@ import AlterarEmail from "./pages/AlterarEmail";
 import NovoEstacionamento from "./pages/NovoEstacionamento";
 import ReservasProprietario from "./pages/ReservasProprietario";
 import EditarVaga from "./pages/EditarVaga";
-// import EditarEstacionamento from "./pages/EditarEstacionamento"
+import GerenciarUsuarios from "./pages/GerenciarUsuarios"
 
 export default function AppRoutes() {
   return (
@@ -38,7 +37,6 @@ export default function AppRoutes() {
 
         {/* Rotas protegidas com layout */}
         <Route element={<AppLayout />}>
-          <Route path="/vagas" element={<Vaga />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/home-cliente" element={<HomeCLiente />} />
           <Route path="/home-proprietario" element={<HomeProprietario />} />
@@ -52,9 +50,9 @@ export default function AppRoutes() {
           <Route path="/alterar-email" element={<AlterarEmail />} />
           <Route path="/estacionamentos/novo" element={<NovoEstacionamento />} />
           <Route path="/estacionamentos/editar/:id" element={<NovoEstacionamento />} />
-          {/* <Route path="/estacionamentos/editar/:id" element={<EditarEstacionamento />} /> */}
           <Route path="/reservas-proprietario" element={<ReservasProprietario />} />
           <Route path="/vagas/:vagaId/editar" element={<EditarVaga />} />
+          <Route path="/usuarios" element={<GerenciarUsuarios />} />
         </Route>
       </Routes>
     </BrowserRouter>

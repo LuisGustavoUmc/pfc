@@ -28,4 +28,4 @@ api:
     origin: http://localhost:3000,http://localhost:8080
 
 viacep:
-  url: ${VIACEP_URL}
+  url: https://viacep.com.br/ws/

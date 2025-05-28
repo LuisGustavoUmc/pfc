@@ -49,7 +49,7 @@ export default function FiltroReservaProprietario({ onBuscar, valorInicial = "" 
         </div>
         <div className="col-3 col-md-2 d-grid">
           <button type="submit" className="btn btn-secondary">
-            <i className="bi bi-search me-1"></i> Filtrar
+            <i class="fa-solid fa-magnifying-glass"></i>
           </button>
         </div>
       </div>

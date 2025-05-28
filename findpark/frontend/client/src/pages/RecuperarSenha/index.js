@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import api from '../../services/api';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 export default function RecuperarSenha() {
   const [email, setEmail] = useState('');
-  const [mensagem, setMensagem] = useState('');
-  const [erro, setErro] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMensagem('');
-    setErro('');
 
     try {
       await api.post('/api/auth/recuperar', { email });
-      setMensagem('E-mail de recuperação enviado com sucesso!');
+      toast.success('E-mail de recuperação enviado com sucesso!');
+
+      setTimeout(() => {
+        navigate('/');
+      }, 3000); // aguarda 3 segundos para exibir o toast
     } catch (err) {
-      setErro('Erro ao enviar e-mail. Verifique o endereço digitado.');
+      toast.error('Erro ao enviar e-mail. Verifique o endereço digitado.');
     }
   };
 
@@ -24,7 +27,7 @@ export default function RecuperarSenha() {
       <h3>Recuperar Senha</h3>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label">E-mail cadastrado</label>
+          <label className="form-label text-dark">E-mail cadastrado</label>
           <input
             type="email"
             className="form-control"
@@ -35,8 +38,6 @@ export default function RecuperarSenha() {
         </div>
         <button type="submit" className="btn btn-primary">Recuperar Conta</button>
       </form>
-      {mensagem && <div className="alert alert-success mt-3">{mensagem}</div>}
-      {erro && <div className="alert alert-danger mt-3">{erro}</div>}
     </div>
   );
 }

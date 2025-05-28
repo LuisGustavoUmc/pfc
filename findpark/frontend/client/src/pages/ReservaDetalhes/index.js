@@ -81,7 +81,7 @@ const ReservaDetalhes = () => {
       {["ATIVA", "FINALIZADA", "CANCELADA"].map((status) => (
         <li className="nav-item" key={status}>
           <button
-            className={`nav-link ${abaAtiva === status ? "active" : ""}`}
+            className={`nav-link text-dark ${abaAtiva === status ? "active" : ""}`}
             onClick={() => {
               setPaginaAtual(0);
               setAbaAtiva(status);

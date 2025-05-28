@@ -1,4 +1,6 @@
 // src/utils/formatarEndereco.js
+import Swal from "sweetalert2";
+
 
 /**
  * Formata o endereço completo com número manual.
@@ -214,3 +216,45 @@ export const gerarResumoReservaHTML = ({
     <p><strong>Total:</strong> ${total}</p>
   `;
 };
+
+export function mostrarTermos() {
+  return Swal.fire({
+    title: 'Termos e Condições de Uso',
+    html: `
+      <p>Bem-vindo ao <strong>FindPark</strong>! Ao utilizar nosso aplicativo, você concorda em cumprir e aceitar os seguintes termos e condições. Leia atentamente.</p>
+
+      <h3>1. Uso do Serviço</h3>
+      <p>O FindPark oferece uma plataforma para facilitar o cadastro e reserva de vagas. O usuário concorda em utilizar o aplicativo apenas para fins legais e conforme as regras definidas.</p>
+
+      <h3>2. Cadastro e Segurança</h3>
+      <p>Para utilizar o FindPark, o usuário deve realizar cadastro com informações verdadeiras. É responsabilidade do usuário manter a confidencialidade de sua senha e dados de acesso.</p>
+
+      <h3>3. Reservas e Cancelamentos</h3>
+      <p>As reservas podem ser feitas pelo cliente e a política de cancelamento, incluindo o prazo de tolerância para atraso, será definida pelo proprietário do estacionamento. Reservas não utilizadas podem ser canceladas conforme definido pelo proprietário.</p>
+
+      <h3>4. Responsabilidades</h3>
+      <p>O FindPark não se responsabiliza por danos, perdas ou extravios ocorridos dentro dos estacionamentos cadastrados. A responsabilidade é do proprietário do estacionamento.</p>
+
+      <h3>5. Modificações dos Termos</h3>
+      <p>O FindPark reserva-se o direito de alterar estes termos a qualquer momento. As alterações serão comunicadas e o uso continuado do aplicativo implica na aceitação dos novos termos.</p>
+
+      <h3>6. Contato</h3>
+      <p>Em caso de dúvidas, entre em contato conosco pelo e-mail: <a href="mailto:findparkumc@gmail.com">findparkumc@gmail.com</a></p>
+
+      <p class="text-center text-muted small mt-4 mb-0">© 2025 FindPark. Todos os direitos reservados.</p>
+    `,
+    width: '600px',
+    showCancelButton: true,
+    confirmButtonText: 'Aceito e Quero Me Cadastrar',
+    cancelButtonText: 'Cancelar',
+    scrollbarPadding: false,
+    buttonsStyling: false,
+    customClass: {
+      popup: 'p-4',
+      title: 'fs-4 fw-bold',
+      htmlContainer: 'text-start',
+      confirmButton: 'btn btn-success me-2',
+      cancelButton: 'btn btn-danger', 
+    },
+  });
+}

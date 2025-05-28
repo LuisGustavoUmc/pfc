@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
+import { toast } from "react-toastify";
 
 const CadastrarVaga = () => {
   const { estacionamentoId } = useParams(); // <- capturando o id da URL
@@ -38,7 +39,7 @@ const CadastrarVaga = () => {
     api
       .post("/api/vagas", vaga)
       .then(() => {
-        alert("Vaga cadastrada com sucesso!");
+        toast.success("Vaga cadastrada com sucesso!");
         setVaga({
           status: "LIVRE",
           tipo: [],
@@ -50,7 +51,7 @@ const CadastrarVaga = () => {
         console.error("Erro ao cadastrar vaga:", err);
         const mensagem =
           err.response?.data?.message || "Erro ao cadastrar vaga.";
-        alert(mensagem);
+        toast.error(mensagem);
       });
   };
 

@@ -2,13 +2,36 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { formatarEndereco } from "../../utils/Utils";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 export default function DetalhesEstacionamento() {
-  const { id } = useParams(); // ID do estacionamento
+  const { id } = useParams();
   const [estacionamento, setEstacionamento] = useState(null);
   const [vagas, setVagas] = useState([]);
   const role = localStorage.getItem("userRole");
+  const [paginaAtual, setPaginaAtual] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+
   const navigate = useNavigate();
+
+  const confirmarAcao = async (mensagem) => {
+    const result = await Swal.fire({
+      title: "Tem certeza?",
+      text: mensagem,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar",
+      buttonsStyling: false,
+      customClass: {
+        confirmButton: "btn btn-danger me-2",
+        cancelButton: "btn btn-secondary",
+      },
+    });
+
+    return result.isConfirmed;
+  };
 
   useEffect(() => {
     const fetchDetalhes = async () => {
@@ -20,17 +43,30 @@ export default function DetalhesEstacionamento() {
 
         const estac = response.data.content[0];
         setEstacionamento(estac);
-        setVagas(estac.vagas);
+
+        const vagasResp = await api.get(`/api/vagas/estacionamento/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            page: paginaAtual,
+            size: 6,
+          },
+        });
+
+        setVagas(vagasResp.data.content);
+        setTotalPaginas(vagasResp.data.totalPages);
       } catch (err) {
         console.error("Erro ao buscar detalhes do estacionamento", err);
       }
     };
 
     fetchDetalhes();
-  }, [id]);
+  }, [id, paginaAtual]);
 
   const handleDeletarEstacionamento = async (id) => {
-    if (!window.confirm("Tem certeza que deseja excluir este estacionamento?")) return;
+    const confirmar = await confirmarAcao(
+      "Tem certeza que deseja excluir este estacionamento?"
+    );
+    if (!confirmar) return;
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -38,16 +74,17 @@ export default function DetalhesEstacionamento() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      alert("Estacionamento excluído com sucesso!");
+      toast.success("Estacionamento excluído com sucesso!");
       navigate("/home-proprietario");
     } catch (err) {
       console.error("Erro ao excluir estacionamento:", err);
-      alert("Erro ao excluir estacionamento.");
+      toast.error("Erro ao excluir estacionamento.");
     }
   };
 
   const handleDeletarVaga = async (vagaId) => {
-    if (!window.confirm("Deseja excluir esta vaga?")) return;
+    const confirmar = await confirmarAcao("Deseja excluir esta vaga?");
+    if (!confirmar) return;
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -55,85 +92,167 @@ export default function DetalhesEstacionamento() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setVagas((prev) => prev.filter((v) => v.id !== vagaId));
-      alert("Vaga excluída com sucesso!");
+      toast.success("Vaga excluída com sucesso!");
+      // Recarrega a lista de vagas da página atual
+      const vagasResp = await api.get(`/api/vagas/estacionamento/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { page: paginaAtual, size: 6 },
+      });
+
+      setVagas(vagasResp.data.content);
+      setTotalPaginas(vagasResp.data.totalPages);
     } catch (err) {
       console.error("Erro ao excluir vaga:", err);
-      alert("Erro ao excluir vaga.");
+      toast.error("Erro ao excluir vaga.");
     }
   };
 
-  if (!estacionamento) return <p>Carregando...</p>;
+  if (!estacionamento)
+    return (
+      <div className="text-center my-5">
+        <div className="spinner-border" role="status" />
+      </div>
+    );
 
   return (
-    <div className="container mt-4">
+    <div className="container-lg my-4">
       {role && (
         <Link
           to={role === "PROPRIETARIO" ? "/home-proprietario" : "/home-cliente"}
-          className="btn btn-link text-decoration-none text-dark mb-3"
+          className="btn btn-outline-secondary mb-3"
         >
           <i className="fas fa-arrow-left me-2"></i>Voltar
         </Link>
       )}
+      <div className="card shadow-sm p-4">
+        <div className="card-body text-center">
+          <h3 className="card-title mb-3 text-primary text-dark">
+            {estacionamento.nome}
+          </h3>
+          <p>
+            <strong>Endereço:</strong>{" "}
+            {formatarEndereco(estacionamento.endereco)}
+          </p>
+          <p>
+            <strong>Capacidade:</strong> {estacionamento.capacidade}
+          </p>
+          <p>
+            <strong>Vagas disponíveis:</strong>{" "}
+            <span className="badge bg-success">
+              {estacionamento.vagasDisponiveis}/{estacionamento.capacidade}
+            </span>
+          </p>
+          <p>
+            <strong>Horário de funcionamento:</strong>{" "}
+            {estacionamento.horaAbertura} às {estacionamento.horaFechamento}
+          </p>
 
-      <h3>{estacionamento.nome}</h3>
-      <p><strong>Endereço:</strong> {formatarEndereco(estacionamento.endereco)}</p>
-      <p><strong>Capacidade:</strong> {estacionamento.capacidade}</p>
-      <p><strong>Vagas disponíveis:</strong> {estacionamento.vagasDisponiveis}/{estacionamento.capacidade}</p>
-      <p><strong>Horário de funcionamento:</strong> {estacionamento.horaAbertura} às {estacionamento.horaFechamento}</p>
-
-      {role === "PROPRIETARIO" && (
-        <div className="d-flex gap-2 my-3">
-          <Link to={`/estacionamentos/editar/${estacionamento.id}`} className="btn btn-warning">
-            <i className="fas fa-edit me-2"></i>Editar Estacionamento
-          </Link>
-          <button className="btn btn-danger" onClick={() => handleDeletarEstacionamento(estacionamento.id)}>
-            <i className="fas fa-trash-alt me-2"></i>Excluir Estacionamento
-          </button>
+          {role === "PROPRIETARIO" && (
+            <div className="d-flex justify-content-center flex-wrap gap-2 mt-4">
+              <Link
+                to={`/estacionamentos/editar/${estacionamento.id}`}
+                className="btn btn-warning"
+              >
+                <i className="fas fa-edit me-2"></i>Editar
+              </Link>
+              <button
+                className="btn btn-danger"
+                onClick={() => handleDeletarEstacionamento(estacionamento.id)}
+              >
+                <i className="fas fa-trash-alt me-2"></i>Excluir
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
-      <h5 className="mt-4">Vagas disponíveis</h5>
-      <ul className="list-group">
+      <div className="mt-5">
+        <h5 className="mb-3">Vagas disponíveis</h5>
         {vagas.length > 0 ? (
-          vagas.map((vaga) => (
-            <li
-              key={vaga.id}
-              className="list-group-item d-flex justify-content-between align-items-center"
-            >
-              <div>
-                Tipo: {Array.isArray(vaga.tipo) ? vaga.tipo.join(", ") : vaga.tipo} - 
-                Preço:{" "}
-                {Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(vaga.preco)}
+          <div className="row">
+            {vagas.map((vaga) => (
+              <div key={vaga.id} className="col-md-6 col-lg-4 mb-3">
+                <div className="card h-100 shadow-sm">
+                  <div className="card-body d-flex flex-column justify-content-between">
+                    <div>
+                      <h6 className="card-title">
+                        Tipo:{" "}
+                        {Array.isArray(vaga.tipo)
+                          ? vaga.tipo.join(", ")
+                          : vaga.tipo}
+                      </h6>
+                      <p className="card-text">
+                        Preço:{" "}
+                        {Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(vaga.preco)}
+                      </p>
+                    </div>
+                    <div
+                      className={`mt-3 d-flex ${
+                        role === "PROPRIETARIO"
+                          ? "justify-content-center gap-2"
+                          : "justify-content-between"
+                      }`}
+                    >
+                      {role === "PROPRIETARIO" && (
+                        <>
+                          <Link
+                            to={`/vagas/${vaga.id}/editar`}
+                            className="btn btn-outline-secondary btn-sm"
+                          >
+                            Editar
+                          </Link>
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => handleDeletarVaga(vaga.id)}
+                          >
+                            Excluir
+                          </button>
+                        </>
+                      )}
+
+                      {role === "CLIENTE" && (
+                        <Link
+                          to={`/vagas/${vaga.id}`}
+                          className="btn btn-success btn-sm"
+                        >
+                          Reservar
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
+            ))}
 
-              {role === "PROPRIETARIO" && (
-                <div className="d-flex gap-2">
-                  <Link to={`/vagas/${vaga.id}/editar`} className="btn btn-secondary btn-sm">
-                    Editar
-                  </Link>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDeletarVaga(vaga.id)}>
-                    Excluir
-                  </button>
-                </div>
-              )}
-
-              {role === "CLIENTE" && (
-                <div className="d-flex gap-2">
-                  <Link to={`/vagas/${vaga.id}`} className="btn btn-secondary btn-sm">
-                    Reservar
-                  </Link>
-                </div>
-              )}
-            </li>
-          ))
+            {totalPaginas > 1 && (
+              <div className="d-flex justify-content-between align-items-center mt-3">
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={() => setPaginaAtual((prev) => prev - 1)}
+                  disabled={paginaAtual === 0}
+                >
+                  Anterior
+                </button>
+                <span>
+                  Página {paginaAtual + 1} de {totalPaginas}
+                </span>
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={() => setPaginaAtual((prev) => prev + 1)}
+                  disabled={paginaAtual >= totalPaginas - 1}
+                >
+                  Próxima
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
-          <li className="list-group-item">Não há vagas disponíveis</li>
+          <div className="alert alert-info">Não há vagas disponíveis</div>
         )}
-      </ul>
+      </div>
     </div>
   );
 }

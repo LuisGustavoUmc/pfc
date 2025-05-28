@@ -158,6 +158,10 @@ export default function VagaDetalhes() {
       showCancelButton: true,
       confirmButtonText: "Confirmar Reserva",
       cancelButtonText: "Cancelar",
+      customClass: {
+        confirmButton: "btn btn-success me-2",
+        cancelButton: "btn btn-danger",
+      },
     }).then((result) => {
       if (result.isConfirmed) {
         const entrada = new Date(
@@ -262,7 +266,18 @@ export default function VagaDetalhes() {
     carregarPlacas();
   }, [id]);
 
-  if (loading) return <div>Carregando detalhes da vaga...</div>;
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center my-5">
+        <div
+          className="spinner-border text-primary"
+          role="status"
+          aria-hidden="true"
+        ></div>
+      </div>
+    );
+  }
+
   if (erroCarregamento)
     return (
       <div className="alert alert-danger">

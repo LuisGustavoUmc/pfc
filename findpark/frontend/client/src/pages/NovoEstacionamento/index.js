@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
 import { formatarEndereco } from "../../utils/Utils";
+import { toast } from "react-toastify";
 
 const EditarEstacionamento = () => {
   const { id } = useParams(); // pega o id da URL (se existir)
@@ -65,7 +66,7 @@ const EditarEstacionamento = () => {
         })
         .catch((err) => {
           console.error("Erro ao carregar estacionamento:", err);
-          alert("Erro ao carregar dados do estacionamento.");
+          toast.error("Erro ao carregar dados do estacionamento.");
         });
     }
   }, [id]);
@@ -107,7 +108,7 @@ const EditarEstacionamento = () => {
     const cepLimpo = form.cep.replace(/\D/g, "");
 
     if (cepLimpo.length !== 8) {
-      alert("CEP inválido.");
+      toast.error("CEP inválido.");
       return;
     }
 
@@ -115,7 +116,7 @@ const EditarEstacionamento = () => {
       .get(`/api/enderecos/${cepLimpo}`)
       .then((res) => {
         if (res.data?.erro) {
-          alert("CEP não encontrado.");
+          toast.warn("CEP não encontrado.");
           return;
         }
 
@@ -142,7 +143,7 @@ const EditarEstacionamento = () => {
       })
       .catch((err) => {
         console.error("Erro ao buscar endereço pelo CEP:", err);
-        alert("Erro ao buscar endereço pelo CEP.");
+        toast.error("Erro ao buscar endereço pelo CEP.");
       });
   };
 
@@ -153,29 +154,35 @@ const EditarEstacionamento = () => {
       api
         .put(`/api/estacionamentos/${id}`, form)
         .then(() => {
-          alert("Estacionamento atualizado com sucesso!");
+          toast.success("Estacionamento atualizado com sucesso!");
           navigate("/home-proprietario");
         })
         .catch((err) => {
           console.error("Erro ao atualizar estacionamento:", err);
-          alert("Erro ao atualizar estacionamento.");
+          toast.error("Erro ao atualizar estacionamento.");
         });
     } else {
       api
         .post("/api/estacionamentos", form)
         .then(() => {
-          alert("Estacionamento cadastrado com sucesso!");
+          toast.success("Estacionamento cadastrado com sucesso!");
           navigate("/home-proprietario");
         })
         .catch((err) => {
           console.error("Erro ao cadastrar estacionamento:", err);
-          alert("Erro ao cadastrar estacionamento.");
+          toast.error("Erro ao cadastrar estacionamento.");
         });
     }
   };
 
   return (
     <div className="container mt-5" style={{ maxWidth: "700px" }}>
+      <Link
+        to={`/estacionamentos/${id}`}
+        className="btn btn-outline-secondary mb-3"
+      >
+        <i className="fas fa-arrow-left me-2"></i>Voltar
+      </Link>
       <h2 className="mb-4 text-center text-dark">
         {id ? "Editar Estacionamento" : "Cadastrar Novo Estacionamento"}
       </h2>
