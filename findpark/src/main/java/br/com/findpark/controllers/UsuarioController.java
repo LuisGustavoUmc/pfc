@@ -71,6 +71,22 @@ public class UsuarioController {
                 .body(res);
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<RespostaDto> updatePorId(@PathVariable String id, @RequestBody AtualizarUsuarioDto atualizarUsuarioDto) {
+        // Buscar usuário pelo id recebido
+        Usuario usuario = usuarioService.buscarPorId(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
+
+        // Aqui você pode colocar lógica para validar se o usuário logado tem permissão para editar esse usuário,
+        // ex: apenas admins ou o próprio usuário pode editar seus dados.
+
+        usuarioService.update(usuario, atualizarUsuarioDto);
+
+        RespostaDto res = new RespostaDto(HttpStatus.OK, "Usuário atualizado", true, Optional.empty());
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
+
+
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> findById(@PathVariable String id) {
         Usuario usuario = usuarioService.buscarPorId(id)

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api"; // axios configurado
 import { Button, Spinner } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
-export default function AdminUsuariosTabela({ onEditar }) {
+export default function AdminUsuariosTabela() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -29,6 +30,12 @@ export default function AdminUsuariosTabela({ onEditar }) {
   useEffect(() => {
     carregarUsuarios();
   }, []);
+
+  const navigate = useNavigate();
+
+  function handleEditar(id) {
+    navigate(`/editar-usuario/${id}`);
+  }
 
   // Deletar usuário com confirmação
   async function handleDeletar(id) {
@@ -71,7 +78,7 @@ export default function AdminUsuariosTabela({ onEditar }) {
                       variant="warning"
                       size="sm"
                       className="me-2"
-                      onClick={() => onEditar(usuario.id)}
+                      onClick={() => handleEditar(usuario.id)}
                     >
                       Editar
                     </Button>

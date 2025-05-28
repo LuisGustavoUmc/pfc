@@ -22,6 +22,7 @@ import NovoEstacionamento from "./pages/NovoEstacionamento";
 import ReservasProprietario from "./pages/ReservasProprietario";
 import EditarVaga from "./pages/EditarVaga";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios"
+import EditarUsuario from "./pages/EditarUsuario";
 
 export default function AppRoutes() {
   return (
@@ -53,6 +54,7 @@ export default function AppRoutes() {
           <Route path="/reservas-proprietario" element={<ReservasProprietario />} />
           <Route path="/vagas/:vagaId/editar" element={<EditarVaga />} />
           <Route path="/usuarios" element={<GerenciarUsuarios />} />
+          <Route path="/editar-usuario/:id" element={<EditarUsuario />} />
         </Route>
       </Routes>
     </BrowserRouter>

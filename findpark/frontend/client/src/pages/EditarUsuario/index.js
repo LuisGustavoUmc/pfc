@@ -62,15 +62,16 @@ export default function EditarUsuario() {
     }
 
     try {
-      // A API atual espera patch em /api/usuarios com o token do usuário logado
-      // Se o backend suportar atualizar outro usuário (admin), envie o id como parte do payload
-      // Ajuste conforme sua API permite
-      await api.patch("/api/usuarios", usuario);
+      await api.patch(`/api/usuarios/${id}`, usuario);
       setMensagem("Dados atualizados com sucesso!");
       // Opcional: redirecionar após salvar
       // navigate("/usuarios");
     } catch (error) {
-      setErro("Erro ao atualizar dados");
+      if (error.response && error.response.data) {
+        setErro(error.response.data.message || "Erro ao atualizar dados");
+      } else {
+        setErro("Erro ao atualizar dados");
+      }
     }
   }
 

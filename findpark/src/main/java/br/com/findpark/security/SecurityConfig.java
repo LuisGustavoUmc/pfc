@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        // URLs públicas
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/registrar").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
@@ -46,9 +47,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/vagas/disponiveis").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/confirmar-cadastro/{token}").permitAll()
+
+                        // PATCH específico liberados para todos
                         .requestMatchers(HttpMethod.PATCH, "/api/usuarios/{id}/validar").permitAll()
+
+                        // Rotas que exigem ADMIN para PATCH em usuarios
+                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/**").hasRole("ADMIN")
+
+                        // GET liberados
                         .requestMatchers(HttpMethod.GET, "/api/vagas/estacionamento/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reservas").permitAll()
+
+                        // Outras rotas restritas por role
                         .requestMatchers("/api/clientes/placas/**").hasRole("CLIENTE")
                         .requestMatchers("/api/estacionamentos/meus").hasRole("PROPRIETARIO")
                         .requestMatchers("/api/usuarios/me").hasAnyRole("CLIENTE", "PROPRIETARIO", "ADMIN")
