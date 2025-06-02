@@ -37,6 +37,9 @@ public class UsuarioService {
     @Autowired
     private EmailService emailService;
 
+
+    // Cria um novo usuário a partir dos dados fornecidos, garantindo unicidade do e-mail,
+    // gera token de confirmação e envia e-mail para validação.
     public Usuario criarUsuario(RegistrarUsuarioDto registrarUsuarioDto) {
 
         if (emailJaRegistrado(registrarUsuarioDto.email())) throw new RecursoJaExisteException("Usuário já cadastrado com esse e-mail!");
@@ -56,26 +59,32 @@ public class UsuarioService {
         return novoUsuario;
     }
 
+    // Busca todos os usuários com paginação.
     public Page<Usuario> buscarTodos(Pageable pageable) {
         return usuarioRepository.findAll(pageable);
     }
 
+    // Salva ou atualiza o usuário no repositório.
     public void salvar(Usuario usuario) {
         usuarioRepository.save(usuario);
     }
 
+    // Busca um usuário pelo ID, retorna Optional.
     public Optional<Usuario> buscarPorId(String id) {
         return usuarioRepository.findById(id);
     }
 
+    // Busca um usuário pelo e-mail, retorna Optional.
     public Optional<Usuario> buscarPorEmail(String email) {
         return usuarioRepository.findByEmail(email);
     }
 
+    // Verifica se o e-mail já está registrado.
     public boolean emailJaRegistrado(String email) {
         return usuarioRepository.findByEmail(email).isPresent();
     }
 
+    // Envia e-mail de confirmação para o usuário com token único.
     public void enviarEmailConfirmacao(Usuario usuario) {
         Context context = new Context();
         context.setVariable("usuario", usuario);
@@ -83,6 +92,7 @@ public class UsuarioService {
         emailService.enviarEmail("Confirmação de Cadastro - " + usuario.getNome(), usuario.getEmail(), EmailTemplate.VALIDAR_USUARIO, context, Optional.empty());
     }
 
+    // Atualiza a senha do usuário, armazenando-a criptografada.
     public void updatePassword(Usuario usuario, String password) {
         String hashedPassword = this.passwordEncoder.encode(password);
 
@@ -91,6 +101,7 @@ public class UsuarioService {
         salvar(usuario);
     }
 
+    // Atualiza os dados pessoais do usuário com base no DTO.
     public void update(Usuario usuario, AtualizarUsuarioDto atualizarUsuarioDto) {
         if (atualizarUsuarioDto.nome() != null) usuario.setNome(atualizarUsuarioDto.nome());
         if (atualizarUsuarioDto.email() != null) usuario.setEmail(atualizarUsuarioDto.email());
@@ -99,15 +110,18 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 
+    // Exclui o usuário do sistema.
     public void delete(Usuario usuario) {
         usuarioRepository.delete(usuario);
     }
 
+    // Busca um usuário pelo token de confirmação.
     public Optional<Usuario> buscarPorTokenConfirmacao(String token) {
         return usuarioRepository.findByTokenConfirmacao(token);
     }
 
-    @Scheduled(fixedRate = 600_000) // a cada 10 minutos
+    // Remove usuários não validados (pendentes) há mais de 2 horas, executado periodicamente.
+    @Scheduled(fixedRate = 600_000)
     public void excluirUsuariosNaoValidados() {
         LocalDateTime limite = LocalDateTime.now().minusHours(2);
         List<Usuario> expirados = usuarioRepository.findByValidadeAndCriadoEmBefore(Validade.PENDENTE, limite);

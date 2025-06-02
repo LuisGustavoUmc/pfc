@@ -1,17 +1,18 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import "./login.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import logo from "../../assets/logo-findpark.png";
 import imgTelaLogin from "../../assets/img-telalogin-esquerda.jpg";
 import api from "../../services/api";
+import { toast } from "react-toastify";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [errors, setErrors] = useState({ email: "", senha: "" });
   const [isLoading, setIsLoading] = useState(false);
-
+  const location = useLocation();
   const navigate = useNavigate();
   const [loginError, setLoginError] = useState("");
 
@@ -31,6 +32,14 @@ export default function Login() {
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => error === "");
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("sessionExpired") === "true") {
+      toast.warn("Sua sessão expirou. Faça login novamente.");
+      navigate("/", { replace: true });
+    }
+  }, [location, navigate]);
 
   async function login(e) {
     e.preventDefault();
@@ -57,14 +66,26 @@ export default function Login() {
       localStorage.setItem("userRole", response.data.role);
 
       if (role === "ADMIN") {
-        navigate("/admin"); // Página do admin
+        navigate("/admin");
       } else if (role === "CLIENTE") {
-        navigate("/home-cliente"); // Página do cliente
+        navigate("/home-cliente");
       } else if (role === "PROPRIETARIO") {
-        navigate("/home-proprietario"); // Página do proprietário
+        navigate("/home-proprietario");
       }
     } catch (err) {
-      setLoginError("Usuário ou senha incorretos. Tente novamente.");
+      if (err.response) {
+        const status = err.response.status;
+
+        if (status === 401) {
+          setLoginError("Usuário ou senha incorretos. Tente novamente.");
+        } else if (status === 403) {
+          navigate("/acesso-negado");
+        } else {
+          setLoginError("Erro inesperado. Tente novamente.");
+        }
+      } else {
+        setLoginError("Erro de conexão com o servidor.");
+      }
     } finally {
       setIsLoading(false);
     }

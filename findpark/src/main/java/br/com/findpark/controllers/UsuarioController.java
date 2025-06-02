@@ -32,6 +32,7 @@ public class UsuarioController {
     @Autowired
     private AuthService authService;
 
+    // Retorna os dados do usuário logado com base no token Bearer recebido no header Authorization
     @GetMapping("/me")
     public ResponseEntity<Usuario> usuarioLogged(@RequestHeader("Authorization") String tokenAuthorization) {
         String accessToken = tokenAuthorization.replace("Bearer ", "");
@@ -39,6 +40,7 @@ public class UsuarioController {
         return authService.usuarioLogged(accessToken);
     }
 
+    // Registra um novo usuário com os dados recebidos no corpo da requisição
     @PostMapping("/registrar")
     public ResponseEntity<Usuario> create(@RequestBody RegistrarUsuarioDto usuarioDto) {
         Usuario usuarioCriado = usuarioService.criarUsuario(usuarioDto);
@@ -48,6 +50,7 @@ public class UsuarioController {
                 .body(usuarioCriado);
     }
 
+    // Busca todos os usuários com paginação e ordenação por nome
     @GetMapping
     public ResponseEntity<Page<Usuario>> buscarTodos(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -59,6 +62,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.buscarTodos(pageable));
     }
 
+    // Atualiza os dados do usuário atualmente autenticado
     @PatchMapping()
     public ResponseEntity<RespostaDto> update(@RequestBody AtualizarUsuarioDto atualizarUsuarioDto) {
         Usuario usuario = SecurityUtils.getCurrentUsuario();
@@ -71,6 +75,7 @@ public class UsuarioController {
                 .body(res);
     }
 
+    // Atualiza os dados de um usuário específico pelo ID, com validação se o usuário existe
     @PatchMapping("/{id}")
     public ResponseEntity<RespostaDto> updatePorId(@PathVariable String id, @RequestBody AtualizarUsuarioDto atualizarUsuarioDto) {
         // Buscar usuário pelo id recebido
@@ -86,7 +91,7 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 
-
+    // Busca um usuário pelo ID informado
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> findById(@PathVariable String id) {
         Usuario usuario = usuarioService.buscarPorId(id)
@@ -97,6 +102,8 @@ public class UsuarioController {
                 .body(usuario);
     }
 
+
+    // Deleta o usuário atualmente autenticado
     @DeleteMapping()
     public ResponseEntity<RespostaDto> delete() {
         Usuario usuario = SecurityUtils.getCurrentUsuario();

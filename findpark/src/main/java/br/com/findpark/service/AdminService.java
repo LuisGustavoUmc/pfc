@@ -24,6 +24,13 @@ public class AdminService {
     @Autowired
     private ReservaRepository reservaRepository;
 
+    /**
+     * Obtém dados agregados para o dashboard administrativo,
+     * incluindo contagem total de usuários, clientes, proprietários,
+     * estacionamentos, vagas e reservas.
+     *
+     * @return um DTO contendo essas contagens.
+     */
     public DashboardAdminDto obterDadosDashboard() {
         long totalUsuarios = usuarioRepository.count();
         long totalClientes = usuarioRepository.countByRole(UserRole.CLIENTE);

@@ -15,6 +15,7 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
+    // Endpoint GET para /api/admin/dashboard que retorna os dados do dashboard do admin
     @GetMapping("/dashboard")
     public ResponseEntity<DashboardAdminDto> getDashboardData() {
         return ResponseEntity.ok(adminService.obterDadosDashboard());

@@ -20,6 +20,7 @@ public class EnderecoController {
         this.enderecoService = enderecoService;
     }
 
+    // GET /api/enderecos/{cep} - busca endereço pelo CEP
     @GetMapping("/{cep}")
     public ResponseEntity<Endereco> buscarEndereco(@PathVariable String cep) {
         Endereco endereco = enderecoService.buscarEnderecoPorCep(cep);

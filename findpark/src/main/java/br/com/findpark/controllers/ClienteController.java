@@ -18,23 +18,27 @@ public class ClienteController {
     @Autowired
     private ClienteService clienteService;
 
+    // GET /api/clientes/placas - retorna lista de placas do cliente
     @GetMapping
     public List<String> listarPlacas() {
         return clienteService.listarPlacas();
     }
 
+    // POST /api/clientes/placas - adiciona uma nova placa
     @PostMapping
     public RespostaDto adicionarPlaca(@RequestBody PlacaDto dto) {
         clienteService.adicionarPlaca(dto.placa());
         return new RespostaDto(HttpStatus.CREATED, "Placa adicionada", true, Optional.empty());
     }
 
+    // PUT /api/clientes/placas - atualiza uma placa existente
     @PutMapping
     public RespostaDto atualizarPlaca(@RequestBody AtualizarPlacaDto dto) {
         clienteService.atualizarPlaca(dto.antiga(), dto.nova());
         return new RespostaDto(HttpStatus.OK, "Placa atualizada", true, Optional.empty());
     }
 
+    // DELETE /api/clientes/placas?placa=xxx - remove uma placa pelo parâmetro
     @DeleteMapping
     public RespostaDto removerPlaca(@RequestParam String placa) {
         clienteService.removerPlaca(placa);

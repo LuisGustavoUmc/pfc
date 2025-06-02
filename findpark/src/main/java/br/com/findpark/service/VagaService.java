@@ -27,6 +27,14 @@ public class VagaService {
     @Autowired
     private EstacionamentoRepository estacionamentoRepository;
 
+    /**
+     * Cria uma nova vaga vinculada a um estacionamento existente,
+     * respeitando a capacidade máxima do estacionamento.
+     * @param vaga vaga a ser criada
+     * @return vaga salva
+     * @throws RecursoNaoEncontradoException se estacionamento não existir
+     * @throws RequisicaoInvalidaException se limite de vagas for atingido
+     */
     public Vaga criar(Vaga vaga) {
         Estacionamento estacionamento = estacionamentoRepository.findById(vaga.getEstacionamentoId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado com id " + vaga.getEstacionamentoId()));
@@ -40,23 +48,52 @@ public class VagaService {
         return vagaRepository.save(vaga);
     }
 
+    /**
+     * Busca vaga por ID, lança exceção se não encontrada.
+     * @param id ID da vaga
+     * @return vaga encontrada
+     */
     public Vaga buscarPorId(String id) {
         return vagaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Vaga não encontrada com id " + id));
     }
 
+    /**
+     * Busca todas as vagas com paginação.
+     * @param pageable paginação
+     * @return página de vagas
+     */
     public Page<Vaga> buscarTodas(Pageable pageable) {
         return vagaRepository.findAll(pageable);
     }
 
+    /**
+     * Busca vagas filtradas por estacionamento com paginação.
+     * @param estacionamentoId ID do estacionamento
+     * @param pageable paginação
+     * @return página de vagas
+     */
     public Page<Vaga> buscarPorEstacionamento(String estacionamentoId, Pageable pageable) {
         return vagaRepository.findByEstacionamentoId(estacionamentoId, pageable);
     }
 
+    /**
+     * Busca vagas filtradas por estacionamento e status com paginação.
+     * @param estacionamentoId ID do estacionamento
+     * @param status status da vaga
+     * @param pageable paginação
+     * @return página de vagas
+     */
     public Page<Vaga> buscarPorEstacionamentoEStatus(String estacionamentoId, StatusVaga status, Pageable pageable) {
         return vagaRepository.findByEstacionamentoIdAndStatus(estacionamentoId, status, pageable);
     }
 
+    /**
+     * Busca vagas com status LIVRE e adiciona dados do estacionamento
+     * para compor DTO de retorno.
+     * @param pageable paginação
+     * @return página de DTOs com vaga e estacionamento
+     */
     public Page<VagaComEstacionamentoDto> buscarVagasComEstacionamento(Pageable pageable) {
         Page<Vaga> vagas = vagaRepository.findByStatus(StatusVaga.LIVRE, pageable);
 
@@ -73,6 +110,14 @@ public class VagaService {
         });
     }
 
+    /**
+     * Busca vagas filtrando pelo termo nos campos do estacionamento
+     * (nome, cidade, bairro, estado), normalizando texto para busca
+     * case-insensitive e sem acentos.
+     * @param termo termo de busca
+     * @param pageable paginação
+     * @return página de DTOs com vaga e estacionamento
+     */
     public Page<VagaComEstacionamentoDto> buscarPorTermo(String termo, Pageable pageable) {
         String termoNormalizado = normalize(termo);
 
@@ -116,6 +161,11 @@ public class VagaService {
         return new PageImpl<>(vagaDtos, pageable, vagasPage.getTotalElements());
     }
 
+    /**
+     * Normaliza texto removendo acentos e convertendo para minúsculas.
+     * @param s texto a normalizar
+     * @return texto normalizado
+     */
     private String normalize(String s) {
         if (s == null) return "";
         return Normalizer.normalize(s, Normalizer.Form.NFD)
@@ -124,6 +174,12 @@ public class VagaService {
                 .trim();
     }
 
+    /**
+     * Busca detalhes de uma vaga por ID incluindo dados do estacionamento.
+     * @param id ID da vaga
+     * @return DTO com dados completos da vaga e estacionamento
+     * @throws RecursoNaoEncontradoException se vaga ou estacionamento não encontrados
+     */
     public VagaComEstacionamentoDto buscarDetalhesPorId(String id) {
         Vaga vaga = vagaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Vaga não encontrada"));
@@ -140,6 +196,12 @@ public class VagaService {
         );
     }
 
+    /**
+     * Atualiza dados de uma vaga existente.
+     * @param id ID da vaga a ser atualizada
+     * @param vagaAtualizada dados atualizados
+     * @return vaga atualizada
+     */
     public Vaga atualizar(String id, Vaga vagaAtualizada) {
         Vaga vagaExistente = buscarPorId(id);
 
@@ -151,6 +213,10 @@ public class VagaService {
         return vagaRepository.save(vagaExistente);
     }
 
+    /**
+     * Remove uma vaga pelo ID.
+     * @param id ID da vaga
+     */
     public void deletar(String id) {
         Vaga vaga = buscarPorId(id);
         vagaRepository.delete(vaga);

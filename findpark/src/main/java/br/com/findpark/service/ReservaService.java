@@ -47,6 +47,7 @@ public class ReservaService {
     @Autowired
     private EstacionamentoRepository estacionamentoRepository;
 
+    // Cria uma nova reserva após validação de horários, vaga, estacionamento e conflitos.
     public Reserva criarReserva(Reserva reserva) {
         log.info("Tentando criar reserva: início={} fim={} vaga={} estacionamento={}",
                 reserva.getDataHoraInicio(),
@@ -91,6 +92,7 @@ public class ReservaService {
         return reservaSalva;
     }
 
+    // Valida os dados da reserva e regras de horários conforme funcionamento do estacionamento.
     private void validarReserva(Estacionamento estacionamento, Reserva reserva) {
         if (reserva.getDataHoraInicio() == null) {
             reserva.setDataHoraInicio(LocalDateTime.now());
@@ -122,7 +124,6 @@ public class ReservaService {
         LocalTime horaFim = reserva.getDataHoraFim().toLocalTime();
 
         if (!is24Horas) {
-            // Estacionamento com horário fixo
             if (horaInicio.isBefore(abertura) || horaInicio.isAfter(fechamento)) {
                 throw new IllegalArgumentException("O horário de início está fora do horário de funcionamento do estacionamento.");
             }
@@ -137,22 +138,26 @@ public class ReservaService {
         }
     }
 
+    // Busca estacionamento pelo ID, lançando exceção caso não encontrado.
     private Estacionamento buscarEstacionamento(String estacionamentoId) {
         return estacionamentoRepository.findById(estacionamentoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado"));
     }
 
+    // Busca vaga pelo ID, lançando exceção caso não encontrada.
     private Vaga buscarVaga(String vagaId) {
         return vagaRepository.findById(vagaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Vaga não encontrado"));
     }
 
+    // Valida se a vaga pertence ao estacionamento informado.
     private void validarVagaPertenceAoEstacionamento(Vaga vaga, Estacionamento estacionamento) {
         if (!vaga.getEstacionamentoId().equals(estacionamento.getId())) {
             throw new IllegalArgumentException("A vaga não pertence ao estacionamento informado.");
         }
     }
 
+    // Atualiza o status para FINALIZADA das reservas ativas que já passaram do horário final.
     private void atualizarStatusReservasExpiradas(List<Reserva> reservas) {
         LocalDateTime agora = LocalDateTime.now();
 
@@ -164,6 +169,7 @@ public class ReservaService {
                 });
     }
 
+    // Lista as reservas do cliente logado, podendo filtrar por status.
     public Page<ReservaDetalhadaDto> listarMinhasReservas(Pageable pageable, StatusReserva status) {
         String clienteId = SecurityUtils.getCurrentUsuario().getId();
 
@@ -201,6 +207,7 @@ public class ReservaService {
         return new PageImpl<>(dtos, pageable, reservasPage.getTotalElements());
     }
 
+    // Mapeia as entidades Reserva, Estacionamento e Vaga para o DTO detalhado usado na API.
     private ReservaDetalhadaDto mapearParaDto(Reserva reserva, Estacionamento estacionamento, Vaga vaga) {
         DetalhesEstacionamentoDto estacionamentoDto = new DetalhesEstacionamentoDto(
                 estacionamento.getId(),
@@ -235,10 +242,10 @@ public class ReservaService {
         );
     }
 
+    // Lista as reservas dos estacionamentos do proprietário logado, com filtro opcional por status e placa.
     public Page<ReservaDetalhadaDto> listarReservasDosMeusEstacionamentos(Pageable pageable, StatusReserva status, String placaVeiculo) {
         String proprietarioId = SecurityUtils.getCurrentUsuario().getId();
 
-        // ✅ Buscar todos os estacionamentos do proprietário (sem paginação aqui!)
         List<Estacionamento> estacionamentos = estacionamentoRepository
                 .findAllByIdProprietario(proprietarioId, Pageable.unpaged())  // OU crie um método que retorne List<>
                 .getContent();
@@ -296,11 +303,13 @@ public class ReservaService {
         return new PageImpl<>(reservasDetalhadasList, pageable, reservasPage.getTotalElements());
     }
 
+    // Busca uma reserva pelo ID, lança exceção se não encontrada.
     public Reserva buscarPorId(String id) {
         return reservaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Reserva não encontrada"));
     }
 
+    // Cancela a reserva pelo ID, garantindo que o usuário é o dono e a reserva está ativa.
     @Transactional
     public void cancelarReserva(String id) {
         Reserva reserva = buscarPorId(id);

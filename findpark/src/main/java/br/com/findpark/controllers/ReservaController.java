@@ -25,11 +25,14 @@ public class ReservaController {
     @Autowired
     private ReservaService reservaService;
 
+
+    // Cria uma nova reserva a partir do objeto Reserva recebido no corpo da requisição
     @PostMapping
     public Reserva criarReserva(@RequestBody Reserva reserva) {
         return reservaService.criarReserva(reserva);
     }
 
+    // Lista reservas dos estacionamentos do proprietário autenticado, com paginação, ordenação e filtros opcionais (status, placa)
     @GetMapping("/proprietario")
     public ResponseEntity<Page<ReservaDetalhadaDto>> listarReservasDosMeusEstacionamentos(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -43,6 +46,7 @@ public class ReservaController {
         return ResponseEntity.ok(reservaService.listarReservasDosMeusEstacionamentos(pageable, status, placa));
     }
 
+    // Lista as reservas do usuário autenticado, com paginação, ordenação e filtro opcional por status
     @GetMapping
     public ResponseEntity<Page<ReservaDetalhadaDto>> listarMinhasReservas(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -55,11 +59,13 @@ public class ReservaController {
         return ResponseEntity.ok(reservaService.listarMinhasReservas(pageable, status));
     }
 
+    // Busca uma reserva pelo ID informado
     @GetMapping("/{id}")
     public Reserva buscarPorId(@PathVariable String id) {
         return reservaService.buscarPorId(id);
     }
 
+    // Cancela uma reserva pelo ID informado e retorna resposta com status e mensagem
     @DeleteMapping("/{id}")
     public RespostaDto cancelar(@PathVariable String id) {
         reservaService.cancelarReserva(id);

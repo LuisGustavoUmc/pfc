@@ -107,7 +107,7 @@ export default function NovaConta() {
 
   return (
     <div className="container mt-5" style={{ maxWidth: "700px" }}>
-      <h2 className="mb-4 text-center text-dark">Criar Nova Conta</h2>
+      <h2 className="mb-4 text-center text-dark">Criar Conta</h2>
       <form onSubmit={handleSubmit}>
         {/* Nome */}
         <div className="mb-3">

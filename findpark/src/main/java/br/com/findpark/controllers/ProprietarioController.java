@@ -21,12 +21,14 @@ public class ProprietarioController {
     @Autowired
     private ProprietarioService proprietarioService;
 
+    // Busca um proprietário pelo ID informado na URL
     @GetMapping("/{id}")
     public ResponseEntity<Proprietario> buscarPorId(@PathVariable String id) {
         Proprietario proprietario = proprietarioService.buscarPorId(id);
         return ResponseEntity.ok(proprietario);
     }
 
+    // Busca todos os proprietários com paginação e ordenação por nome
     @GetMapping
     public ResponseEntity<Page<Proprietario>> buscarTodas(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -38,6 +40,7 @@ public class ProprietarioController {
         return ResponseEntity.ok(proprietarioService.buscarTodos(pageable));
     }
 
+    // Deleta o proprietário atualmente autenticado
     @DeleteMapping
     public ResponseEntity<Void> deletar() {
         Proprietario usuarioAtual = (Proprietario) SecurityUtils.getCurrentUsuario();

@@ -4,12 +4,19 @@ import api from "../../services/api";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import "./gerenciarPlacas.css";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function GerenciarPlacas() {
   const [placas, setPlacas] = useState([]);
   const [novaPlaca, setNovaPlaca] = useState("");
   const [editandoPlaca, setEditandoPlaca] = useState(null);
   const [placaEditada, setPlacaEditada] = useState("");
+  const role = localStorage.getItem("userRole");
+  const navigate = useNavigate;
+
+  if (role !== "CLIENTE") {
+    navigate("/acesso-negado");
+  }
 
   const regexPlacaMercosul = /^[A-Z0-9]{1,7}$/;
 

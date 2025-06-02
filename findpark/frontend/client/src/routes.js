@@ -23,6 +23,9 @@ import ReservasProprietario from "./pages/ReservasProprietario";
 import EditarVaga from "./pages/EditarVaga";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios"
 import EditarUsuario from "./pages/EditarUsuario";
+import AcessoNegado from "./pages/Err/acesso-negado"
+import ErroInterno from "./pages/Err/erro-interno"
+// import NaoEncotrado from "./pages/Err/nao-encontrado"
 
 export default function AppRoutes() {
   return (
@@ -55,6 +58,9 @@ export default function AppRoutes() {
           <Route path="/vagas/:vagaId/editar" element={<EditarVaga />} />
           <Route path="/usuarios" element={<GerenciarUsuarios />} />
           <Route path="/editar-usuario/:id" element={<EditarUsuario />} />
+          {/* <Route path="*" element={<NaoEncotrado/>} /> */}
+          <Route path="/acesso-negado" element={<AcessoNegado/>} />
+          <Route path="/erro-interno" element={<ErroInterno/>} />
         </Route>
       </Routes>
     </BrowserRouter>

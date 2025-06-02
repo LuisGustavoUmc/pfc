@@ -22,6 +22,7 @@ public class EstacionamentoController {
     @Autowired
     private EstacionamentoService estacionamentoService;
 
+    // Cria um novo estacionamento associado ao usuário logado
     @PostMapping
     public ResponseEntity<Estacionamento> criarEstacionamento(@RequestBody Estacionamento estacionamento) {
         String idProprietario = SecurityUtils.getCurrentUsuario().getId();
@@ -30,6 +31,7 @@ public class EstacionamentoController {
         return ResponseEntity.ok(salvo);
     }
 
+    // Lista os estacionamentos do usuário autenticado com paginação e ordenação
     @GetMapping("/meus")
     public ResponseEntity<Page<Estacionamento>> listarMeusEstacionamentos(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -43,6 +45,7 @@ public class EstacionamentoController {
         return ResponseEntity.ok(lista);
     }
 
+    // Lista todos os estacionamentos com paginação e ordenação
     @GetMapping
     public ResponseEntity<Page<Estacionamento>> listarTodos (
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -54,12 +57,14 @@ public class EstacionamentoController {
         return ResponseEntity.ok(estacionamentoService.buscarTodosEstacionamentos(pageable));
     }
 
+    // Busca estacionamento pelo ID
     @GetMapping("/{id}")
     public ResponseEntity<Estacionamento> buscarPorId(@PathVariable String id) {
         Estacionamento estacionamento = estacionamentoService.buscarEstacionamentoPorId(id);
         return ResponseEntity.ok(estacionamento);
     }
 
+    // Busca detalhes do estacionamento com vagas disponíveis, com paginação e ordenação
     @GetMapping("/{id}/detalhes")
     public ResponseEntity<Page<DetalhesEstacionamentoDto>> buscarDetalhes (
             @PathVariable String id,
@@ -72,6 +77,7 @@ public class EstacionamentoController {
         return ResponseEntity.ok(estacionamentoService.buscarComVagasDisponiveis(id, pageable));
     }
 
+    // Atualiza os dados do estacionamento informado pelo ID
     @PutMapping("/{id}")
     public ResponseEntity<Void> atualizar(@PathVariable String id, @RequestBody AtualizarEstacionamentoDto dto) {
         Estacionamento estacionamento = estacionamentoService.buscarEstacionamentoPorId(id);
@@ -79,6 +85,7 @@ public class EstacionamentoController {
         return ResponseEntity.noContent().build();
     }
 
+    // Remove o estacionamento pelo ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable String id) {
         estacionamentoService.delete(id);

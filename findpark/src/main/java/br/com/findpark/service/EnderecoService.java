@@ -11,6 +11,10 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class EnderecoService {
 
+    /**
+     * Serviço para buscar endereço a partir do CEP utilizando a API ViaCEP.
+     */
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
@@ -22,7 +26,12 @@ public class EnderecoService {
         this.objectMapper = objectMapper;
     }
 
-    // ✅ 1. Obter endereço completo pelo CEP
+    /**
+     * Consulta o endereço correspondente ao CEP informado usando a API externa ViaCEP.
+     *
+     * @param cep o código postal a ser consultado.
+     * @return o objeto Endereco mapeado da resposta JSON, ou null em caso de erro no parsing.
+     */
     public Endereco buscarEnderecoPorCep(String cep) {
         String url = serviceUrl + cep + "/json/";
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -34,3 +43,4 @@ public class EnderecoService {
         }
     }
 }
+

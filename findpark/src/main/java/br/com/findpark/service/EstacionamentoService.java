@@ -28,24 +28,52 @@ public class EstacionamentoService {
     @Autowired
     private VagaRepository vagaRepository;
 
+    /**
+     * Cria e salva um novo estacionamento no repositório.
+     * @param estacionamento o estacionamento a ser criado.
+     * @return o estacionamento salvo.
+     */
     public Estacionamento criarEstacionamento(Estacionamento estacionamento) {
         return estacionamentoRepository.save(estacionamento);
     }
 
+    /**
+     * Busca um estacionamento pelo seu ID.
+     * @param id o identificador do estacionamento.
+     * @return o estacionamento encontrado.
+     * @throws RecursoNaoEncontradoException se não encontrar o estacionamento.
+     */
     public Estacionamento buscarEstacionamentoPorId(String id) {
         return estacionamentoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado com id " + id));
     }
 
+    /**
+     * Busca estacionamentos associados ao proprietário logado, paginados.
+     * @param pageable dados de paginação.
+     * @return página de estacionamentos do proprietário.
+     */
     public Page<Estacionamento> buscarPorProprietario(Pageable pageable) {
         String idProprietario = SecurityUtils.getCurrentUsuario().getId();
         return estacionamentoRepository.findAllByIdProprietario(idProprietario, pageable);
     }
 
+    /**
+     * Busca todos os estacionamentos paginados.
+     * @param pageable dados de paginação.
+     * @return página de todos os estacionamentos.
+     */
     public Page<Estacionamento> buscarTodosEstacionamentos(Pageable pageable) {
         return estacionamentoRepository.findAll(pageable);
     }
 
+    /**
+     * Busca estacionamentos com vagas disponíveis, opcionalmente filtrando por ID.
+     * @param id opcional, filtro por ID do estacionamento.
+     * @param pageable dados de paginação.
+     * @return página de detalhes dos estacionamentos com vagas livres.
+     * @throws RecursoNaoEncontradoException se não encontrar estacionamentos.
+     */
     public Page<DetalhesEstacionamentoDto> buscarComVagasDisponiveis(String id, Pageable pageable) {
         Page<Estacionamento> estacionamentosPage;
 
@@ -88,6 +116,11 @@ public class EstacionamentoService {
     }
 
 
+    /**
+     * Atualiza os dados de um estacionamento com base no DTO recebido.
+     * @param estacionamento a entidade a ser atualizada.
+     * @param dto dados para atualização.
+     */
     public void atualizarEstacionamento(Estacionamento estacionamento, AtualizarEstacionamentoDto dto) {
         if (dto.nome() != null) estacionamento.setNome(dto.nome());
         if (dto.endereco() != null) estacionamento.setEndereco(dto.endereco());
@@ -98,6 +131,11 @@ public class EstacionamentoService {
         estacionamentoRepository.save(estacionamento);
     }
 
+    /**
+     * Remove um estacionamento pelo seu ID.
+     * @param id identificador do estacionamento a ser removido.
+     * @throws RecursoNaoEncontradoException se o estacionamento não for encontrado.
+     */
     public void delete(String id) {
         Estacionamento entidade = estacionamentoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado com id " + id));
