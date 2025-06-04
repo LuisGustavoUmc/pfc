@@ -4,10 +4,17 @@ import br.com.findpark.dtos.usuarios.AtualizarUsuarioDto;
 import br.com.findpark.dtos.usuarios.RegistrarUsuarioDto;
 import br.com.findpark.email.EmailService;
 import br.com.findpark.email.EmailTemplate;
+import br.com.findpark.entities.Cliente;
+import br.com.findpark.entities.Estacionamento;
+import br.com.findpark.entities.Proprietario;
 import br.com.findpark.entities.Usuario;
+import br.com.findpark.entities.enums.usuarios.UserRole;
 import br.com.findpark.entities.enums.usuarios.Validade;
 import br.com.findpark.exceptions.usuario.RecursoJaExisteException;
+import br.com.findpark.repositories.EstacionamentoRepository;
 import br.com.findpark.repositories.UsuarioRepository;
+import br.com.findpark.repositories.VagaRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -15,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 
 import java.time.LocalDateTime;
@@ -22,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class UsuarioService {
 
@@ -36,6 +45,15 @@ public class UsuarioService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private ReservaService reservaService;
+
+    @Autowired
+    private EstacionamentoRepository estacionamentoRepository;
+
+    @Autowired
+    private VagaRepository vagaRepository;
 
 
     // Cria um novo usuário a partir dos dados fornecidos, garantindo unicidade do e-mail,
@@ -111,9 +129,27 @@ public class UsuarioService {
     }
 
     // Exclui o usuário do sistema.
+    @Transactional
     public void delete(Usuario usuario) {
+        if (usuario.getRole() == UserRole.CLIENTE) {
+            reservaService.cancelarReservasDoCliente(usuario.getId());
+        }
+
+        if (usuario.getRole() == UserRole.PROPRIETARIO){
+            List<Estacionamento> estacionamentos = estacionamentoRepository.findByIdProprietario(usuario.getId());
+
+            for (Estacionamento est : estacionamentos) {
+                vagaRepository.deleteByEstacionamentoId(est.getId()); // Remove vagas associadas
+            }
+
+            estacionamentoRepository.deleteAll(estacionamentos); // Remove estacionamentos
+            log.info("Proprietário {} teve seus estacionamentos e vagas deletados.", usuario.getId());
+        }
+
         usuarioRepository.delete(usuario);
     }
+
+
 
     // Busca um usuário pelo token de confirmação.
     public Optional<Usuario> buscarPorTokenConfirmacao(String token) {

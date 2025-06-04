@@ -327,4 +327,17 @@ public class ReservaService {
         reservaRepository.save(reserva);
         log.info("Reserva {} cancelada pelo usuário {}", id, usuarioId);
     }
+
+    @Transactional
+    public void cancelarReservasDoCliente(String clienteId) {
+        List<Reserva> reservas = reservaRepository.findAllByClienteId(clienteId);
+        for (Reserva reserva : reservas) {
+            if (reserva.getStatus() == StatusReserva.ATIVA) {
+                reserva.setStatus(StatusReserva.CANCELADA);
+            }
+        }
+        reservaRepository.saveAll(reservas);
+        log.info("Reservas do cliente {} foram canceladas", clienteId);
+    }
+
 }

@@ -45,8 +45,17 @@ public class VagaService {
             throw new RequisicaoInvalidaException("Número máximo de vagas atingido para este estacionamento.");
         }
 
-        return vagaRepository.save(vaga);
+        Vaga vagaSalva = vagaRepository.save(vaga);
+
+        // Incrementa vagasDisponiveis se a vaga for LIVRE
+        if (vagaSalva.getStatus() == StatusVaga.LIVRE) {
+            estacionamento.setVagasDisponiveis(estacionamento.getVagasDisponiveis() + 1);
+            estacionamentoRepository.save(estacionamento);
+        }
+
+        return vagaSalva;
     }
+
 
     /**
      * Busca vaga por ID, lança exceção se não encontrada.
@@ -204,13 +213,30 @@ public class VagaService {
      */
     public Vaga atualizar(String id, Vaga vagaAtualizada) {
         Vaga vagaExistente = buscarPorId(id);
+        Estacionamento estacionamento = estacionamentoRepository.findById(vagaExistente.getEstacionamentoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado"));
 
-        vagaExistente.setStatus(vagaAtualizada.getStatus());
+        StatusVaga antigoStatus = vagaExistente.getStatus();
+        StatusVaga novoStatus = vagaAtualizada.getStatus();
+
+        vagaExistente.setStatus(novoStatus);
         vagaExistente.setTipo(vagaAtualizada.getTipo());
         vagaExistente.setPreco(vagaAtualizada.getPreco());
         vagaExistente.setEstacionamentoId(vagaAtualizada.getEstacionamentoId());
 
-        return vagaRepository.save(vagaExistente);
+        Vaga vagaSalva = vagaRepository.save(vagaExistente);
+
+        // Ajustar contador de vagas disponíveis se status mudou
+        if (antigoStatus != novoStatus) {
+            if (antigoStatus == StatusVaga.LIVRE && novoStatus != StatusVaga.LIVRE) {
+                estacionamento.setVagasDisponiveis(estacionamento.getVagasDisponiveis() - 1);
+            } else if (antigoStatus != StatusVaga.LIVRE && novoStatus == StatusVaga.LIVRE) {
+                estacionamento.setVagasDisponiveis(estacionamento.getVagasDisponiveis() + 1);
+            }
+            estacionamentoRepository.save(estacionamento);
+        }
+
+        return vagaSalva;
     }
 
     /**
@@ -219,6 +245,15 @@ public class VagaService {
      */
     public void deletar(String id) {
         Vaga vaga = buscarPorId(id);
+        Estacionamento estacionamento = estacionamentoRepository.findById(vaga.getEstacionamentoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado"));
+
+        // Decrementa se a vaga era LIVRE
+        if (vaga.getStatus() == StatusVaga.LIVRE && estacionamento.getVagasDisponiveis() > 0) {
+            estacionamento.setVagasDisponiveis(estacionamento.getVagasDisponiveis() - 1);
+            estacionamentoRepository.save(estacionamento);
+        }
+
         vagaRepository.delete(vaga);
     }
 }

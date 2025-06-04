@@ -75,26 +75,37 @@ public class EstacionamentoService {
      * @throws RecursoNaoEncontradoException se não encontrar estacionamentos.
      */
     public Page<DetalhesEstacionamentoDto> buscarComVagasDisponiveis(String id, Pageable pageable) {
-        Page<Estacionamento> estacionamentosPage;
+        List<Estacionamento> estacionamentos;
 
         if (id != null && !id.isEmpty()) {
             Estacionamento est = estacionamentoRepository.findById(id)
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado"));
-
-            estacionamentosPage = new PageImpl<>(List.of(est), pageable, 1);
+            estacionamentos = List.of(est);
         } else {
-            estacionamentosPage = estacionamentoRepository.findAll(pageable);
+            estacionamentos = estacionamentoRepository.findAll();
         }
 
-        if (estacionamentosPage.isEmpty()) {
-            throw new RecursoNaoEncontradoException("Nenhum estacionamento encontrado.");
+        // Filtra somente os que possuem pelo menos uma vaga livre
+        List<Estacionamento> comVagasLivres = estacionamentos.stream()
+                .filter(est -> vagaRepository.countByEstacionamentoIdAndStatus(est.getId(), StatusVaga.LIVRE) > 0)
+                .collect(Collectors.toList());
+
+        if (comVagasLivres.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Nenhum estacionamento com vagas disponíveis.");
         }
 
-        List<DetalhesEstacionamentoDto> estacionamentoDtos = estacionamentosPage.stream()
+        // Aplica a paginação manualmente
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), comVagasLivres.size());
+        List<Estacionamento> pagina = comVagasLivres.subList(start, end);
+
+        List<DetalhesEstacionamentoDto> dtos = pagina.stream()
                 .map(est -> {
-                    Page<Vaga> vagasLivres = vagaRepository.findByEstacionamentoIdAndStatus(est.getId(), StatusVaga.LIVRE, pageable);
+                    long vagasLivres = vagaRepository.countByEstacionamentoIdAndStatus(est.getId(), StatusVaga.LIVRE);
 
-                    List<VagaDto> vagaDtos = vagasLivres.stream()
+                    List<VagaDto> vagaDtos = vagaRepository
+                            .findByEstacionamentoIdAndStatus(est.getId(), StatusVaga.LIVRE, Pageable.ofSize(3))
+                            .stream()
                             .map(v -> new VagaDto(v.getId(), v.getTipo(), v.getPreco()))
                             .collect(Collectors.toList());
 
@@ -104,7 +115,7 @@ public class EstacionamentoService {
                             est.getEndereco(),
                             est.getTelefone(),
                             est.getCapacidade(),
-                            vagasLivres.getNumberOfElements(),
+                            (int) vagasLivres,
                             est.getHoraAbertura().toString(),
                             est.getHoraFechamento().toString(),
                             vagaDtos
@@ -112,9 +123,8 @@ public class EstacionamentoService {
                 })
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(estacionamentoDtos, pageable, estacionamentosPage.getTotalElements());
+        return new PageImpl<>(dtos, pageable, comVagasLivres.size());
     }
-
 
     /**
      * Atualiza os dados de um estacionamento com base no DTO recebido.
@@ -139,6 +149,9 @@ public class EstacionamentoService {
     public void delete(String id) {
         Estacionamento entidade = estacionamentoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado com id " + id));
+
+        vagaRepository.deleteByEstacionamentoId(id);
+
         estacionamentoRepository.delete(entidade);
     }
 }

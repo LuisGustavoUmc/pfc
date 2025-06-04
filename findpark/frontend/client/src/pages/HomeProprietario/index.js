@@ -73,7 +73,7 @@ const HomeProprietario = () => {
   return (
     <div className="container-lg py-4">
       <div className="text-center mb-4">
-        <h1 className="display-6">👋 Olá, {nomeUsuario || "Proprietário"}!</h1>
+        <h1 className="display-6">Olá, {nomeUsuario || "Proprietário"}!</h1>
         <p className="text-muted">
           Gerencie seus estacionamentos com facilidade.
         </p>
@@ -94,7 +94,7 @@ const HomeProprietario = () => {
         {estacionamentos.length === 0 ? (
           <div className="col-12">
             <div className="alert alert-info" role="alert">
-              Nenhum estacionamento cadastrado ainda.
+              Nenhum estacionamento cadastrado.
             </div>
           </div>
         ) : (

@@ -13,6 +13,7 @@ import java.util.List;
 public interface ReservaRepository extends MongoRepository<Reserva, String> {
     Page<Reserva> findByClienteIdAndStatus(String clienteId, StatusReserva status, Pageable pageable);
     Page<Reserva> findByClienteId(String clienteId, Pageable pageable);
+    List<Reserva> findAllByClienteId(String clienteId);
 
     boolean existsByVagaIdAndStatusAndDataHoraFimAfterAndDataHoraInicioBefore(
             String vagaId,

@@ -33,8 +33,5 @@ public class Estacionamento {
 
     private LocalTime horaAbertura;
     private LocalTime horaFechamento;
-
-    @JsonIgnore
-    private List<Vaga> vagas = new ArrayList<>();
 }
 

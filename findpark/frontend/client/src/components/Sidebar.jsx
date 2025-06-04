@@ -62,12 +62,6 @@ export default function Sidebar() {
           {role === "CLIENTE" && (
             <>
               <li className="sidebar-item">
-                <Link to={homePath} className="sidebar-link">
-                  <i className="fa-solid fa-square-parking"></i>
-                  <span>Vagas</span>
-                </Link>
-              </li>
-              <li className="sidebar-item">
                 <Link to="/cliente/placas" className="sidebar-link">
                   <i className="fa-solid fa-car"></i>
                   <span>Placas</span>
@@ -84,12 +78,6 @@ export default function Sidebar() {
 
           {role === "PROPRIETARIO" && (
             <>
-              <li className="sidebar-item">
-                <Link to="/home-proprietario" className="sidebar-link">
-                  <i class="fa-solid fa-square-parking"></i>
-                  <span>Estacionamentos</span>
-                </Link>
-              </li>
               <li className="sidebar-item">
                 <Link to="/reservas-proprietario"  className="sidebar-link">
                   <i className="fa-solid fa-calendar-days"></i>

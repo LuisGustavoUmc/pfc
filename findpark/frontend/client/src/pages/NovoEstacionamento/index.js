@@ -75,7 +75,8 @@ const EditarEstacionamento = () => {
     const numeros = valor.replace(/\D/g, "").slice(0, 11); // Só até 11 dígitos
 
     if (numeros.length <= 2) return `(${numeros}`;
-    if (numeros.length <= 7) return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+    if (numeros.length <= 7)
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
     if (numeros.length <= 11)
       return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
 
@@ -89,13 +90,16 @@ const EditarEstacionamento = () => {
       const telefoneFormatado = formatarTelefone(value);
       setForm((prev) => ({ ...prev, telefone: telefoneFormatado }));
     } else if (name === "numero") {
-      setForm((prev) => ({
-        ...prev,
-        endereco: {
-          ...prev.endereco,
-          numero: value,
-        },
-      }));
+      // Permite apenas números
+      if (/^\d*$/.test(value)) {
+        setForm((prev) => ({
+          ...prev,
+          endereco: {
+            ...prev.endereco,
+            numero: value,
+          },
+        }));
+      }
     } else if (name === "cep") {
       const cepLimpo = value.replace(/\D/g, "").slice(0, 8);
       setForm((prev) => ({ ...prev, cep: cepLimpo }));
@@ -178,13 +182,13 @@ const EditarEstacionamento = () => {
   return (
     <div className="container mt-5" style={{ maxWidth: "700px" }}>
       <Link
-        to={`/estacionamentos/${id}`}
+        to={`/home-proprietario`}
         className="btn btn-outline-secondary mb-3"
       >
         <i className="fas fa-arrow-left me-2"></i>Voltar
       </Link>
       <h2 className="mb-4 text-center text-dark">
-        {id ? "Editar Estacionamento" : "Cadastrar Novo Estacionamento"}
+        {id ? "Editar Estacionamento" : "Cadastrar Estacionamento"}
       </h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
@@ -231,7 +235,7 @@ const EditarEstacionamento = () => {
         <div className="mb-3">
           <label className="form-label text-dark">Número</label>
           <input
-            type="text"
+            type="number"
             name="numero"
             value={form.endereco.numero || ""}
             onChange={handleChange}

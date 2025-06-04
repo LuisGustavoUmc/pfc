@@ -31,7 +31,7 @@ public class EstacionamentoController {
         return ResponseEntity.ok(salvo);
     }
 
-    // Lista os estacionamentos do usuário autenticado com paginação e ordenação
+    // Lista os estacionamentos do usuário proprietario autenticado com paginação e ordenação
     @GetMapping("/meus")
     public ResponseEntity<Page<Estacionamento>> listarMeusEstacionamentos(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -63,6 +63,21 @@ public class EstacionamentoController {
         Estacionamento estacionamento = estacionamentoService.buscarEstacionamentoPorId(id);
         return ResponseEntity.ok(estacionamento);
     }
+
+    //listar com vagas disponíveis para visualização do cliente
+    @GetMapping("/disponiveis")
+    public ResponseEntity<Page<DetalhesEstacionamentoDto>> listarDisponiveis(
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "12") Integer size,
+            @RequestParam(value = "direction", defaultValue = "asc") String direction
+    ) {
+        var sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "nome"));
+
+        Page<DetalhesEstacionamentoDto> resultado = estacionamentoService.buscarComVagasDisponiveis(null, pageable);
+        return ResponseEntity.ok(resultado);
+    }
+
 
     // Busca detalhes do estacionamento com vagas disponíveis, com paginação e ordenação
     @GetMapping("/{id}/detalhes")

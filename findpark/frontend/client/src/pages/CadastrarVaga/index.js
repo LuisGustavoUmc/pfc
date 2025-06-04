@@ -64,7 +64,7 @@ const CadastrarVaga = () => {
       <form onSubmit={handleSubmit} className="d-flex flex-column gap-4">
         <div>
           <label htmlFor="preco" className="form-label text-dark small">
-            <i className="fas fa-dollar-sign me-2"></i>Preço
+            <i className="fas fa-dollar-sign me-2"></i>Preço por hora
           </label>
           <input
             type="number"
@@ -100,23 +100,6 @@ const CadastrarVaga = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        <div>
-          <label htmlFor="status" className="form-label text-dark small">
-            <i className="fas fa-toggle-on me-2"></i>Status
-          </label>
-          <select
-            name="status"
-            id="status"
-            value={vaga.status}
-            onChange={handleChange}
-            required
-            className="form-select form-select-md"
-          >
-            <option value="LIVRE">LIVRE</option>
-            <option value="OCUPADA">OCUPADA</option>
-          </select>
         </div>
 
         <button type="submit" className="btn btn-primary btn-lg w-100 mt-3">

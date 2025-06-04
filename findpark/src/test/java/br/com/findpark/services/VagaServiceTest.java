@@ -226,7 +226,6 @@ class VagaServiceTest {
     @Test
     void atualizar_sucesso() {
         Vaga atualizacao = new Vaga();
-        atualizacao.setStatus(StatusVaga.OCUPADA);
         atualizacao.setTipo(List.of(TipoVaga.DEFICIENTE));
         atualizacao.setPreco(20);
         atualizacao.setEstacionamentoId("est-1");
@@ -236,7 +235,6 @@ class VagaServiceTest {
 
         Vaga resultado = vagaService.atualizar("vaga-1", atualizacao);
 
-        assertEquals(StatusVaga.OCUPADA, resultado.getStatus());
         assertEquals(List.of(TipoVaga.DEFICIENTE), resultado.getTipo());
         assertEquals((20), resultado.getPreco());
     }

@@ -182,7 +182,7 @@ export default function DetalhesEstacionamento() {
                           : vaga.tipo}
                       </h6>
                       <p className="card-text">
-                        Preço:{" "}
+                        Preço por hora:{" "}
                         {Intl.NumberFormat("pt-BR", {
                           style: "currency",
                           currency: "BRL",

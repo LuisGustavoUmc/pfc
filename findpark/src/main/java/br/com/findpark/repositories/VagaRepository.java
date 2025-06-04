@@ -13,4 +13,6 @@ public interface VagaRepository extends MongoRepository<Vaga, String> {
     Page<Vaga> findByStatus(StatusVaga status, Pageable pageable);
     Page<Vaga> findByEstacionamentoIdAndStatus(String estacionamentoId, StatusVaga status, Pageable pageable);
     long countByEstacionamentoId(String estacionamentoId);
+    void deleteByEstacionamentoId(String estacionamentoId);
+    long countByEstacionamentoIdAndStatus(String estacionamentoId, StatusVaga status);
 }
