@@ -69,12 +69,12 @@ public class EstacionamentoService {
 
     /**
      * Busca estacionamentos com vagas disponíveis, opcionalmente filtrando por ID.
-     * @param id opcional, filtro por ID do estacionamento.
+     * @param // id opcional, filtro por ID do estacionamento.
      * @param pageable dados de paginação.
      * @return página de detalhes dos estacionamentos com vagas livres.
      * @throws RecursoNaoEncontradoException se não encontrar estacionamentos.
      */
-    public Page<DetalhesEstacionamentoDto> buscarComVagasDisponiveis(String id, Pageable pageable) {
+    public Page<DetalhesEstacionamentoDto> buscarComVagasDisponiveis(String id, String termo, Pageable pageable) {
         List<Estacionamento> estacionamentos;
 
         if (id != null && !id.isEmpty()) {
@@ -83,6 +83,20 @@ public class EstacionamentoService {
             estacionamentos = List.of(est);
         } else {
             estacionamentos = estacionamentoRepository.findAll();
+        }
+
+        // Filtro por termo de busca (nome, localidade ou bairro)
+        if (termo != null && !termo.trim().isEmpty()) {
+            String termoLower = termo.toLowerCase();
+            estacionamentos = estacionamentos.stream()
+                    .filter(e ->
+                            (e.getNome() != null && e.getNome().toLowerCase().contains(termoLower)) ||
+                                    (e.getEndereco() != null && (
+                                            (e.getEndereco().getLocalidade() != null && e.getEndereco().getLocalidade().toLowerCase().contains(termoLower)) ||
+                                                    (e.getEndereco().getBairro() != null && e.getEndereco().getBairro().toLowerCase().contains(termoLower))
+                                    ))
+                    )
+                    .collect(Collectors.toList());
         }
 
         // Filtra somente os que possuem pelo menos uma vaga livre
@@ -94,7 +108,7 @@ public class EstacionamentoService {
             throw new RecursoNaoEncontradoException("Nenhum estacionamento com vagas disponíveis.");
         }
 
-        // Aplica a paginação manualmente
+        // Paginação manual
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), comVagasLivres.size());
         List<Estacionamento> pagina = comVagasLivres.subList(start, end);

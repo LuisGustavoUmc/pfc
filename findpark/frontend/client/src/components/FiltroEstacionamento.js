@@ -22,7 +22,7 @@ export default function FiltroEstacionamento({ onBuscar }) {
             <input
               type="text"
               className="form-control form-control-dark"
-              placeholder="Buscar por cidade, bairro ou nome do estacionamento"
+              placeholder="Buscar por cidade, bairro ou estacionamento"
               value={termo}
               onChange={(e) => setTermo(e.target.value)}
             />

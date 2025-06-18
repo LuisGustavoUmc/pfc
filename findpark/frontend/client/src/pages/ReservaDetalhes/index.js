@@ -10,7 +10,7 @@ const ReservaDetalhes = () => {
   const [abaAtiva, setAbaAtiva] = useState("ATIVA");
   const [paginaAtual, setPaginaAtual] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
-  const tamanhoPagina = 10; // Número de reservas por página
+  const tamanhoPagina = 12; // Número de reservas por página
 
   useEffect(() => {
     buscarReservas();

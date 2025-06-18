@@ -103,7 +103,7 @@ class EstacionamentoControllerTest {
         Pageable pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.ASC, "nome"));
         Page<DetalhesEstacionamentoDto> page = new PageImpl<>(List.of());
 
-        when(estacionamentoService.buscarComVagasDisponiveis(eq("est-1"), any(Pageable.class))).thenReturn(page);
+        when(estacionamentoService.buscarComVagasDisponiveis(eq("est-1"), eq(null), any(Pageable.class))).thenReturn(page);
 
         ResponseEntity<Page<DetalhesEstacionamentoDto>> response = estacionamentoController.buscarDetalhes("est-1", 0, 12, "asc");
 

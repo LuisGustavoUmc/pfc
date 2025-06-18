@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/usuarios/{id}/validar").permitAll()
 
                         // Rotas que exigem ADMIN para PATCH em usuarios
-                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "api/admin/**").hasRole("ADMIN")
 
                         // GET liberados
                         .requestMatchers(HttpMethod.GET, "/api/vagas/estacionamento/{id}").permitAll()

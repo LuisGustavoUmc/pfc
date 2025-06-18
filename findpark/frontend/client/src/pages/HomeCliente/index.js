@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
 import { formatarEndereco } from "../../utils/Utils";
+import FiltroEstacionamento from "../../components/FiltroEstacionamento";
 
 const HomeCliente = () => {
   const [estacionamentos, setEstacionamentos] = useState([]);
@@ -9,6 +10,7 @@ const HomeCliente = () => {
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [nomeUsuario, setNomeUsuario] = useState("");
   const pageSize = 4;
+  const [filtroTermo, setFiltroTermo] = useState("");
 
   useEffect(() => {
     api
@@ -17,7 +19,7 @@ const HomeCliente = () => {
       .catch((err) => console.error("Erro ao buscar usuário:", err));
 
     buscarEstacionamentos();
-  }, [paginaAtual]);
+  }, [paginaAtual, filtroTermo]);
 
   const buscarEstacionamentos = () => {
     api
@@ -25,6 +27,7 @@ const HomeCliente = () => {
         params: {
           page: paginaAtual,
           size: pageSize,
+          termo: filtroTermo,
         },
       })
       .then((res) => {
@@ -59,13 +62,20 @@ const HomeCliente = () => {
     </div>
   );
 
+  const handleFiltroBusca = ({ termo }) => {
+    setFiltroTermo(termo);
+    setPaginaAtual(0); // Reinicia para primeira página ao filtrar
+  };
+
   return (
     <div className="container-lg py-4">
       <div className="text-center mb-4">
         <h1 className="display-6">Olá, {nomeUsuario || "Cliente"}!</h1>
-        <p className="text-muted">Escolha um estacionamento para reservar sua vaga.</p>
+        <p className="text-muted">
+          Escolha um estacionamento para reservar sua vaga.
+        </p>
       </div>
-
+      <FiltroEstacionamento onBuscar={handleFiltroBusca} />
       <h2 className="h4 text-center mb-4">Estacionamentos disponíveis</h2>
       <div className="row">
         {estacionamentos.length === 0 ? (
@@ -115,7 +125,6 @@ const HomeCliente = () => {
           ))
         )}
       </div>
-
       {totalPaginas > 1 && renderPaginacao()}
     </div>
   );

@@ -69,15 +69,15 @@ public class EstacionamentoController {
     public ResponseEntity<Page<DetalhesEstacionamentoDto>> listarDisponiveis(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "12") Integer size,
-            @RequestParam(value = "direction", defaultValue = "asc") String direction
+            @RequestParam(value = "direction", defaultValue = "asc") String direction,
+            @RequestParam(value = "termo", required = false) String termo
     ) {
-        var sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "nome"));
 
-        Page<DetalhesEstacionamentoDto> resultado = estacionamentoService.buscarComVagasDisponiveis(null, pageable);
+        Page<DetalhesEstacionamentoDto> resultado = estacionamentoService.buscarComVagasDisponiveis(null, termo, pageable);
         return ResponseEntity.ok(resultado);
     }
-
 
     // Busca detalhes do estacionamento com vagas disponíveis, com paginação e ordenação
     @GetMapping("/{id}/detalhes")
@@ -89,7 +89,7 @@ public class EstacionamentoController {
     ) {
         var sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, "nome"));
-        return ResponseEntity.ok(estacionamentoService.buscarComVagasDisponiveis(id, pageable));
+        return ResponseEntity.ok(estacionamentoService.buscarComVagasDisponiveis(id, null, pageable));
     }
 
     // Atualiza os dados do estacionamento informado pelo ID

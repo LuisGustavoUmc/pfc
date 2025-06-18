@@ -23,14 +23,24 @@ const ReservaDetalhes = () => {
       const response = await api.get("/api/reservas/proprietario", {
         params: {
           page: paginaAtual,
-          size: 10,
+          size: 8,
           direction: "asc",
           status: abaAtiva,
           placa: filtros.placa || undefined,
         },
       });
-      setReservas(response.data.content);
-      setTotalPaginas(response.data.totalPages);
+
+      const { totalPages, content } = response.data;
+      console.log("Resposta da API:", response.data);
+
+      // Corrigir página inválida
+      if (paginaAtual >= totalPages && totalPages > 0) {
+        setPaginaAtual(totalPages - 1);
+        return; // evitar renderizar conteúdo vazio nesta renderização
+      }
+
+      setReservas(content);
+      setTotalPaginas(totalPages);
     } catch (error) {
       console.error("Erro ao buscar reservas:", error);
       setReservas([]);

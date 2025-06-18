@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 
 export default function Perfil() {
   const [usuario, setUsuario] = useState({
+    id: "",
     nome: "",
     email: "",
     telefone: "",
@@ -31,6 +32,7 @@ export default function Perfil() {
       try {
         const res = await api.get("api/usuarios/me");
         setUsuario({
+          id: res.data.id,
           nome: res.data.nome,
           email: res.data.email,
           telefone: res.data.telefone || "",
@@ -141,7 +143,7 @@ export default function Perfil() {
 
       <div className="mt-5 d-flex gap-3 justify-content-center">
         <Link
-          to="/trocar-senha"
+          to={`/usuarios/trocar-senha/${usuario.id}`}
           className="btn btn-outline-secondary d-flex align-items-center fs-6 text-dark"
         >
           <i className="fas fa-key me-2"></i> Trocar senha

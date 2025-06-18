@@ -60,11 +60,14 @@ public class UsuarioService {
     // gera token de confirmação e envia e-mail para validação.
     public Usuario criarUsuario(RegistrarUsuarioDto registrarUsuarioDto) {
 
-        if (emailJaRegistrado(registrarUsuarioDto.email())) throw new RecursoJaExisteException("Usuário já cadastrado com esse e-mail!");
+        String emailNormalizado = registrarUsuarioDto.email().trim().toLowerCase();
+
+        if (emailJaRegistrado(emailNormalizado))
+            throw new RecursoJaExisteException("Usuário já cadastrado com esse e-mail!");
 
         Usuario novoUsuario = new Usuario();
         novoUsuario.setNome(registrarUsuarioDto.nome());
-        novoUsuario.setEmail(registrarUsuarioDto.email());
+        novoUsuario.setEmail(emailNormalizado);
         novoUsuario.setSenha(passwordEncoder.encode(registrarUsuarioDto.senha()));
         novoUsuario.setTelefone(registrarUsuarioDto.telefone());
         novoUsuario.setRole(registrarUsuarioDto.role());
@@ -94,12 +97,14 @@ public class UsuarioService {
 
     // Busca um usuário pelo e-mail, retorna Optional.
     public Optional<Usuario> buscarPorEmail(String email) {
-        return usuarioRepository.findByEmail(email);
+        String emailNormalizado = email.trim().toLowerCase();
+        return usuarioRepository.findByEmail(emailNormalizado);
     }
 
     // Verifica se o e-mail já está registrado.
     public boolean emailJaRegistrado(String email) {
-        return usuarioRepository.findByEmail(email).isPresent();
+        String emailNormalizado = email.trim().toLowerCase();
+        return usuarioRepository.findByEmail(emailNormalizado).isPresent();
     }
 
     // Envia e-mail de confirmação para o usuário com token único.

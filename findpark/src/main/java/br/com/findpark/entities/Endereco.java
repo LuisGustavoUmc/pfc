@@ -24,5 +24,8 @@ public class Endereco {
     private String gia;
     private String ddd;
     private String siafi;
+
+    public Endereco(String s, String endereçoNãoDisponível, String s1, String s2, String s3, String s4, String s5, String s6, String s7, String s8, String s9, String s10, String s11, String s12, String s13) {
+    }
 }
 

@@ -97,9 +97,9 @@ public class EstacionamentoServiceTest {
 
         when(estacionamentoRepository.findById("est1")).thenReturn(Optional.of(estacionamento));
         Page<Vaga> vagasPage = new PageImpl<>(List.of(vaga));
-        when(vagaRepository.findByEstacionamentoIdAndStatus("est1", StatusVaga.LIVRE, pageable)).thenReturn(vagasPage);
+        when(vagaRepository.findByEstacionamentoIdAndStatus(eq("est1"), eq(StatusVaga.LIVRE), any(Pageable.class))).thenReturn(vagasPage);
 
-        Page<DetalhesEstacionamentoDto> result = estacionamentoService.buscarComVagasDisponiveis("est1", pageable);
+        Page<DetalhesEstacionamentoDto> result = estacionamentoService.buscarComVagasDisponiveis("est1", null, pageable);
 
         assertEquals(1, result.getTotalElements());
         DetalhesEstacionamentoDto dto = result.getContent().get(0);

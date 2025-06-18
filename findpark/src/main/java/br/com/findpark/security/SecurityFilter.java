@@ -45,7 +45,7 @@ public class SecurityFilter extends OncePerRequestFilter {
             try {
                 var login = tokenService.validateToken(token);
 
-                Usuario usuario = usuarioRepository.findByEmail(login)
+                Usuario usuario = usuarioRepository.findByEmail(login.toLowerCase())
                         .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
 
                 // Converte a role do enum para o formato Spring Security: ROLE_<NOME>

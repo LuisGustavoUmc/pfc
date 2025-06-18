@@ -4,10 +4,7 @@ import br.com.findpark.dtos.estacionamentos.DetalhesEstacionamentoDto;
 import br.com.findpark.dtos.reservas.ReservaDetalhadaDto;
 import br.com.findpark.dtos.reservas.StatusReserva;
 import br.com.findpark.dtos.vagas.VagaDto;
-import br.com.findpark.entities.Estacionamento;
-import br.com.findpark.entities.Reserva;
-import br.com.findpark.entities.Usuario;
-import br.com.findpark.entities.Vaga;
+import br.com.findpark.entities.*;
 import br.com.findpark.exceptions.reserva.ReservaConflitanteException;
 import br.com.findpark.exceptions.usuario.RecursoNaoEncontradoException;
 import br.com.findpark.repositories.EstacionamentoRepository;
@@ -140,14 +137,12 @@ public class ReservaService {
 
     // Busca estacionamento pelo ID, lançando exceção caso não encontrado.
     private Estacionamento buscarEstacionamento(String estacionamentoId) {
-        return estacionamentoRepository.findById(estacionamentoId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado"));
+        return estacionamentoRepository.findById(estacionamentoId).orElse(null);
     }
 
     // Busca vaga pelo ID, lançando exceção caso não encontrada.
     private Vaga buscarVaga(String vagaId) {
-        return vagaRepository.findById(vagaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Vaga não encontrado"));
+        return vagaRepository.findById(vagaId).orElse(null);
     }
 
     // Valida se a vaga pertence ao estacionamento informado.
@@ -173,60 +168,75 @@ public class ReservaService {
     public Page<ReservaDetalhadaDto> listarMinhasReservas(Pageable pageable, StatusReserva status) {
         String clienteId = SecurityUtils.getCurrentUsuario().getId();
 
-        Page<Reserva> reservasPage;
-        if (status != null) {
-            reservasPage = reservaRepository.findByClienteIdAndStatus(clienteId, status, pageable);
-        } else {
-            reservasPage = reservaRepository.findByClienteId(clienteId, pageable);
-        }
+        List<Reserva> reservas = (status != null)
+                ? reservaRepository.findByClienteIdAndStatus(clienteId, status, Pageable.unpaged()).getContent()
+                : reservaRepository.findByClienteId(clienteId, Pageable.unpaged()).getContent();
 
-        atualizarStatusReservasExpiradas(reservasPage.getContent());
+        atualizarStatusReservasExpiradas(reservas);
 
-        List<ReservaDetalhadaDto> dtos = reservasPage.stream()
+        List<ReservaDetalhadaDto> dtos = reservas.stream()
                 .map(reserva -> {
-                    try {
-                        Estacionamento estacionamento = buscarEstacionamento(reserva.getEstacionamentoId());
-                        Vaga vaga = buscarVaga(reserva.getVagaId());
-
-                        if (estacionamento != null && vaga != null) {
-                            return mapearParaDto(reserva, estacionamento, vaga);
-                        }
-                    } catch (Exception e) {
-                        log.warn("Dados incompletos para reserva {}, ignorada.", reserva.getId());
-                    }
-                    return null;
+                    Estacionamento est = buscarEstacionamento(reserva.getEstacionamentoId());
+                    Vaga vaga = buscarVaga(reserva.getVagaId());
+                    return mapearParaDto(reserva, est, vaga);
                 })
-                .filter(Objects::nonNull)
                 .toList();
 
-        if (dtos.isEmpty() && reservasPage.hasNext()) {
-            Pageable proximaPagina = pageable.next();
-            return listarMinhasReservas(proximaPagina, status);
-        }
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), dtos.size());
+        List<ReservaDetalhadaDto> pageContent = dtos.subList(start, end);
 
-        return new PageImpl<>(dtos, pageable, reservasPage.getTotalElements());
+        return new PageImpl<>(pageContent, pageable, dtos.size());
     }
 
-    // Mapeia as entidades Reserva, Estacionamento e Vaga para o DTO detalhado usado na API.
     private ReservaDetalhadaDto mapearParaDto(Reserva reserva, Estacionamento estacionamento, Vaga vaga) {
-        DetalhesEstacionamentoDto estacionamentoDto = new DetalhesEstacionamentoDto(
+        // Endereço
+        Endereco endereco = (estacionamento != null)
+                ? estacionamento.getEndereco()
+                : new Endereco(
+                "", "Endereço não disponível", "", "", "", "",
+                "", "", "", "", "", "", "", "", ""
+        );
+
+        // DTO de estacionamento
+        DetalhesEstacionamentoDto estacionamentoDto = (estacionamento != null)
+                ? new DetalhesEstacionamentoDto(
                 estacionamento.getId(),
                 estacionamento.getNome(),
-                estacionamento.getEndereco(),
+                endereco,
                 estacionamento.getTelefone(),
                 estacionamento.getCapacidade(),
                 estacionamento.getVagasDisponiveis(),
-                estacionamento.getHoraAbertura().toString(),
-                estacionamento.getHoraFechamento().toString(),
+                estacionamento.getHoraAbertura() != null ? estacionamento.getHoraAbertura().toString() : "N/A",
+                estacionamento.getHoraFechamento() != null ? estacionamento.getHoraFechamento().toString() : "N/A",
+                null
+        )
+                : new DetalhesEstacionamentoDto(
+                reserva.getEstacionamentoId(),
+                "[Estacionamento Removido]",
+                endereco,
+                "Telefone não disponível",
+                0,
+                0,
+                "N/A",
+                "N/A",
                 null
         );
 
-        VagaDto vagaDto = new VagaDto(
+        // DTO de vaga
+        VagaDto vagaDto = (vaga != null)
+                ? new VagaDto(
                 vaga.getId(),
                 vaga.getTipo(),
                 vaga.getPreco()
+        )
+                : new VagaDto(
+                reserva.getVagaId(),
+                List.of(), // Lista vazia ou pode criar um tipo específico "REMOVIDA"
+                0.0
         );
 
+        // Cliente
         Usuario cliente = usuarioRepository.findById(reserva.getClienteId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente não encontrado para a reserva"));
 
@@ -242,12 +252,13 @@ public class ReservaService {
         );
     }
 
+
     // Lista as reservas dos estacionamentos do proprietário logado, com filtro opcional por status e placa.
     public Page<ReservaDetalhadaDto> listarReservasDosMeusEstacionamentos(Pageable pageable, StatusReserva status, String placaVeiculo) {
         String proprietarioId = SecurityUtils.getCurrentUsuario().getId();
 
         List<Estacionamento> estacionamentos = estacionamentoRepository
-                .findAllByIdProprietario(proprietarioId, Pageable.unpaged())  // OU crie um método que retorne List<>
+                .findAllByIdProprietario(proprietarioId, Pageable.unpaged())
                 .getContent();
 
         if (estacionamentos.isEmpty()) {
@@ -258,49 +269,35 @@ public class ReservaService {
                 .map(Estacionamento::getId)
                 .toList();
 
-        Page<Reserva> reservasPage;
+        List<Reserva> reservas = (status != null)
+                ? reservaRepository.findByEstacionamentoIdInAndStatus(estacionamentoIds, status, Pageable.unpaged()).getContent()
+                : reservaRepository.findByEstacionamentoIdIn(estacionamentoIds, Pageable.unpaged()).getContent();
 
-        if (status != null) {
-            reservasPage = reservaRepository.findByEstacionamentoIdInAndStatus(estacionamentoIds, status, pageable);
-        } else {
-            reservasPage = reservaRepository.findByEstacionamentoIdIn(estacionamentoIds, pageable);
-        }
-
-        if (reservasPage.isEmpty()) {
-            throw new RecursoNaoEncontradoException("Reserva não encontrada");
-        }
-
-        List<ReservaDetalhadaDto> reservasDetalhadasList = reservasPage.stream()
+        List<ReservaDetalhadaDto> todasFiltradas = reservas.stream()
                 .map(reserva -> {
-                    Estacionamento estacionamento = estacionamentos.stream()
+                    Estacionamento est = estacionamentos.stream()
                             .filter(e -> e.getId().equals(reserva.getEstacionamentoId()))
-                            .findFirst()
-                            .orElse(null);
-
-                    Vaga vaga = null;
+                            .findFirst().orElse(null);
                     try {
-                        vaga = buscarVaga(reserva.getVagaId());
+                        Vaga vaga = buscarVaga(reserva.getVagaId());
+                        return (est != null && vaga != null)
+                                ? mapearParaDto(reserva, est, vaga)
+                                : null;
                     } catch (Exception e) {
-                        log.warn("Vaga não encontrada para ID: {}", reserva.getVagaId());
-                    }
-
-                    if (estacionamento == null || vaga == null) {
-                        log.warn("Reserva ignorada devido a dados incompletos. Reserva ID: {}", reserva.getId());
+                        log.warn("Dados incompletos para reserva {}: {}", reserva.getId(), e.getMessage());
                         return null;
                     }
-
-                    return mapearParaDto(reserva, estacionamento, vaga);
                 })
                 .filter(Objects::nonNull)
+                .filter(dto -> placaVeiculo == null || dto.placaVeiculo().equalsIgnoreCase(placaVeiculo))
                 .toList();
 
-        if (placaVeiculo != null && !placaVeiculo.isBlank()) {
-            reservasDetalhadasList = reservasDetalhadasList.stream()
-                    .filter(dto -> dto.placaVeiculo().equalsIgnoreCase(placaVeiculo))
-                    .toList();
-        }
+        // Paginação manual após filtro
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), todasFiltradas.size());
+        List<ReservaDetalhadaDto> pageContent = todasFiltradas.subList(start, end);
 
-        return new PageImpl<>(reservasDetalhadasList, pageable, reservasPage.getTotalElements());
+        return new PageImpl<>(pageContent, pageable, todasFiltradas.size());
     }
 
     // Busca uma reserva pelo ID, lança exceção se não encontrada.

@@ -31,7 +31,6 @@
         <dozer.version>7.0.0</dozer.version>
         <java-jwt-version>4.4.0</java-jwt-version>
         <thymeleaf-version>2.5.1</thymeleaf-version>
-        <caffeine-version>3.1.8</caffeine-version>
     </properties>
     <dependencies>
 

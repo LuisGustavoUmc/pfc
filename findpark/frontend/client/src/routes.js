@@ -50,7 +50,7 @@ export default function AppRoutes() {
           <Route path="/estacionamentos/:estacionamentoId/cadastrar-vaga" element={<CadastrarVaga />} />
           <Route path="/reservas" element={<ReservaDetalhes />} />
           <Route path="/perfil" element={<Perfil />} />
-          <Route path="/trocar-senha" element={<TrocarSenha />} />
+          <Route path="/usuarios/trocar-senha/:id" element={<TrocarSenha />} />
           <Route path="/alterar-email" element={<AlterarEmail />} />
           <Route path="/estacionamentos/novo" element={<NovoEstacionamento />} />
           <Route path="/estacionamentos/editar/:id" element={<NovoEstacionamento />} />

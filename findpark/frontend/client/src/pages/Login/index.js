@@ -76,7 +76,7 @@ export default function Login() {
       if (err.response) {
         const status = err.response.status;
 
-        if (status === 401) {
+        if (status === 401 || status === 400 || status === 404) {
           setLoginError("Usuário ou senha incorretos. Tente novamente.");
         } else if (status === 403) {
           navigate("/acesso-negado");
@@ -87,7 +87,7 @@ export default function Login() {
         setLoginError("Erro de conexão com o servidor.");
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // <-- garante que o botão volte ao normal
     }
   }
 
