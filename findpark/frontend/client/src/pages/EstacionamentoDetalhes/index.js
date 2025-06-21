@@ -78,7 +78,18 @@ export default function DetalhesEstacionamento() {
       navigate("/home-proprietario");
     } catch (err) {
       console.error("Erro ao excluir estacionamento:", err);
-      toast.error("Erro ao excluir estacionamento.");
+
+      const status = err.response?.status;
+      const mensagem =
+        err.response?.data?.message || "Erro ao excluir estacionamento.";
+
+      if (status === 409) {
+        toast.error(mensagem); 
+      } else if (status === 404) {
+        toast.error("Estacionamento não encontrado.");
+      } else {
+        toast.error("Erro ao excluir estacionamento.");
+      }
     }
   };
 

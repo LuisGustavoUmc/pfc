@@ -10,5 +10,4 @@ import java.util.List;
 public interface EstacionamentoRepository extends MongoRepository<Estacionamento, String> {
     Page<Estacionamento> findAllByIdProprietario(String idProprietario, Pageable pageable);
     List<Estacionamento> findByIdProprietario(String idProprietario);
-
 }

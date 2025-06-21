@@ -68,7 +68,7 @@ const ReservaDetalhes = () => {
 
     if (confirm.isConfirmed) {
       try {
-        await api.delete(`/api/reservas/${id}`);
+        await api.delete(`/api/reservas/proprietario/${id}`);
         Swal.fire({
           toast: true,
           position: "top-end",

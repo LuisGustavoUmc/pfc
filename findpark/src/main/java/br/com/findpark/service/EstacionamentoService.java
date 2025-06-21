@@ -2,14 +2,18 @@ package br.com.findpark.service;
 
 import br.com.findpark.dtos.estacionamentos.AtualizarEstacionamentoDto;
 import br.com.findpark.dtos.estacionamentos.DetalhesEstacionamentoDto;
+import br.com.findpark.dtos.reservas.StatusReserva;
 import br.com.findpark.dtos.vagas.VagaDto;
 import br.com.findpark.entities.Estacionamento;
 import br.com.findpark.entities.Vaga;
 import br.com.findpark.entities.enums.vagas.StatusVaga;
+import br.com.findpark.exceptions.estacionamento.EstacionamentoComReservaAtivaException;
 import br.com.findpark.exceptions.usuario.RecursoNaoEncontradoException;
 import br.com.findpark.repositories.EstacionamentoRepository;
+import br.com.findpark.repositories.ReservaRepository;
 import br.com.findpark.repositories.VagaRepository;
 import br.com.findpark.security.SecurityUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class EstacionamentoService {
 
@@ -26,7 +31,13 @@ public class EstacionamentoService {
     private EstacionamentoRepository estacionamentoRepository;
 
     @Autowired
+    private ReservaRepository reservaRepository;
+
+    @Autowired
     private VagaRepository vagaRepository;
+
+    @Autowired
+    private LogExclusaoService logExclusaoService;
 
     /**
      * Cria e salva um novo estacionamento no repositório.
@@ -156,16 +167,36 @@ public class EstacionamentoService {
     }
 
     /**
-     * Remove um estacionamento pelo seu ID.
+     * Remove um estacionamento pelo seu ID, se não possuir reservas ativas.
+     *
      * @param id identificador do estacionamento a ser removido.
      * @throws RecursoNaoEncontradoException se o estacionamento não for encontrado.
+     * @throws IllegalStateException se houver reservas ativas vinculadas ao estacionamento.
      */
     public void delete(String id) {
-        Estacionamento entidade = estacionamentoRepository.findById(id)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado com id " + id));
+        Estacionamento estacionamento = estacionamentoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Estacionamento não encontrado com id " + id
+                ));
+
+        boolean possuiReservasAtivas = reservaRepository.existsByEstacionamentoIdAndStatus(id, StatusReserva.ATIVA);
+
+        if (possuiReservasAtivas) {
+            throw new EstacionamentoComReservaAtivaException(
+                    "Não é possível deletar o estacionamento. Existem reservas ativas vinculadas."
+            );
+        }
 
         vagaRepository.deleteByEstacionamentoId(id);
 
-        estacionamentoRepository.delete(entidade);
+        estacionamentoRepository.delete(estacionamento);
+
+        log.info("Estacionamento {} foi deletado pelo usuário {}", id, SecurityUtils.getCurrentUsuario().getId());
+
+        logExclusaoService.registrar(
+                "Estacionamento", // Nome da entidade
+                id,               // ID do estacionamento deletado
+                "Estacionamento '" + estacionamento.getNome() + "' removido."
+        );
     }
 }

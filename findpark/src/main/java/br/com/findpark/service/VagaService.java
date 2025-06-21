@@ -8,6 +8,8 @@ import br.com.findpark.exceptions.RequisicaoInvalidaException;
 import br.com.findpark.exceptions.usuario.RecursoNaoEncontradoException;
 import br.com.findpark.repositories.EstacionamentoRepository;
 import br.com.findpark.repositories.VagaRepository;
+import br.com.findpark.security.SecurityUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -18,6 +20,7 @@ import java.text.Normalizer;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class VagaService {
 
@@ -26,6 +29,9 @@ public class VagaService {
 
     @Autowired
     private EstacionamentoRepository estacionamentoRepository;
+
+    @Autowired
+    private LogExclusaoService logExclusaoService;
 
     /**
      * Cria uma nova vaga vinculada a um estacionamento existente,
@@ -55,7 +61,6 @@ public class VagaService {
 
         return vagaSalva;
     }
-
 
     /**
      * Busca vaga por ID, lança exceção se não encontrada.
@@ -255,5 +260,15 @@ public class VagaService {
         }
 
         vagaRepository.delete(vaga);
+
+        String usuarioId = SecurityUtils.getCurrentUsuario().getId();
+
+        log.info("Vaga {} removida pelo usuário {}", id, usuarioId);
+
+        logExclusaoService.registrar(
+                "Vaga",
+                id,
+                "Vaga removida pelo usuário " + usuarioId
+        );
     }
 }

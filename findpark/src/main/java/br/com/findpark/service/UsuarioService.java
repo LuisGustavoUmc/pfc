@@ -50,6 +50,9 @@ public class UsuarioService {
     private ReservaService reservaService;
 
     @Autowired
+    private LogExclusaoService logExclusaoService;
+
+    @Autowired
     private EstacionamentoRepository estacionamentoRepository;
 
     @Autowired
@@ -136,24 +139,52 @@ public class UsuarioService {
     // Exclui o usuário do sistema.
     @Transactional
     public void delete(Usuario usuario) {
+        String usuarioId = usuario.getId();
+
         if (usuario.getRole() == UserRole.CLIENTE) {
-            reservaService.cancelarReservasDoCliente(usuario.getId());
+            reservaService.cancelarReservaComoProprietario(usuarioId);
+
+            logExclusaoService.registrar(
+                    "Usuario",
+                    usuarioId,
+                    "Cliente removido do sistema junto com suas reservas canceladas."
+            );
         }
 
-        if (usuario.getRole() == UserRole.PROPRIETARIO){
-            List<Estacionamento> estacionamentos = estacionamentoRepository.findByIdProprietario(usuario.getId());
+        if (usuario.getRole() == UserRole.PROPRIETARIO) {
+            List<Estacionamento> estacionamentos = estacionamentoRepository.findByIdProprietario(usuarioId);
 
             for (Estacionamento est : estacionamentos) {
-                vagaRepository.deleteByEstacionamentoId(est.getId()); // Remove vagas associadas
+                // Exclui vagas associadas
+                vagaRepository.deleteByEstacionamentoId(est.getId());
+
+                logExclusaoService.registrar(
+                        "Vaga",
+                        "Todas as vagas do estacionamento " + est.getId(),
+                        "Vagas removidas devido à exclusão do proprietário " + usuarioId
+                );
+
+                // Log da exclusão do estacionamento
+                logExclusaoService.registrar(
+                        "Estacionamento",
+                        est.getId(),
+                        "Estacionamento removido devido à exclusão do proprietário " + usuarioId
+                );
             }
 
-            estacionamentoRepository.deleteAll(estacionamentos); // Remove estacionamentos
-            log.info("Proprietário {} teve seus estacionamentos e vagas deletados.", usuario.getId());
+            estacionamentoRepository.deleteAll(estacionamentos);
+
+            log.info("Proprietário {} teve seus estacionamentos e vagas deletados.", usuarioId);
+
+            logExclusaoService.registrar(
+                    "Usuario",
+                    usuarioId,
+                    "Proprietário removido do sistema junto com seus estacionamentos e vagas."
+            );
         }
 
         usuarioRepository.delete(usuario);
     }
-
 
 
     // Busca um usuário pelo token de confirmação.

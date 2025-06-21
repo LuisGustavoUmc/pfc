@@ -22,11 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,6 +40,9 @@ public class ReservaService {
 
     @Autowired
     private EstacionamentoRepository estacionamentoRepository;
+
+    @Autowired
+    private LogExclusaoService logExclusaoService;
 
     // Cria uma nova reserva após validação de horários, vaga, estacionamento e conflitos.
     public Reserva criarReserva(Reserva reserva) {
@@ -322,19 +322,43 @@ public class ReservaService {
 
         reserva.setStatus(StatusReserva.CANCELADA);
         reservaRepository.save(reserva);
+
         log.info("Reserva {} cancelada pelo usuário {}", id, usuarioId);
+
+        logExclusaoService.registrar(
+                "Reserva",
+                id,
+                "Reserva cancelada pelo cliente " + usuarioId
+        );
     }
 
     @Transactional
-    public void cancelarReservasDoCliente(String clienteId) {
-        List<Reserva> reservas = reservaRepository.findAllByClienteId(clienteId);
-        for (Reserva reserva : reservas) {
-            if (reserva.getStatus() == StatusReserva.ATIVA) {
-                reserva.setStatus(StatusReserva.CANCELADA);
-            }
-        }
-        reservaRepository.saveAll(reservas);
-        log.info("Reservas do cliente {} foram canceladas", clienteId);
-    }
+    public void cancelarReservaComoProprietario(String reservaId) {
+        Reserva reserva = buscarPorId(reservaId);
+        String proprietarioId = SecurityUtils.getCurrentUsuario().getId();
 
+        // Busca o estacionamento da reserva
+        Estacionamento estacionamento = estacionamentoRepository.findById(reserva.getEstacionamentoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Estacionamento não encontrado para esta reserva."));
+
+        // Valida se o estacionamento pertence ao proprietário logado
+        if (!estacionamento.getIdProprietario().equals(proprietarioId)) {
+            throw new SecurityException("Você não tem permissão para cancelar esta reserva.");
+        }
+
+        if (!reserva.getStatus().equals(StatusReserva.ATIVA)) {
+            throw new IllegalStateException("Apenas reservas ativas podem ser canceladas.");
+        }
+
+        reserva.setStatus(StatusReserva.CANCELADA);
+        reservaRepository.save(reserva);
+
+        log.info("Reserva {} cancelada pelo proprietário {}", reservaId, proprietarioId);
+
+        logExclusaoService.registrar(
+                "Reserva",
+                reservaId,
+                "Reserva cancelada pelo proprietário " + proprietarioId
+        );
+    }
 }

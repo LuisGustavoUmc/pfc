@@ -97,6 +97,13 @@ export default function Sidebar() {
                   <span>Gerenciar Usuários</span>
                 </Link>
               </li>
+
+              <li className="sidebar-item">
+                <Link to="/logs" className="sidebar-link">
+                  <i className="fa-solid fa-file"></i>
+                  <span>Logs</span>
+                </Link>
+              </li>
             </>
           )}
 

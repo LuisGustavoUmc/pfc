@@ -14,6 +14,7 @@ public interface ReservaRepository extends MongoRepository<Reserva, String> {
     Page<Reserva> findByClienteIdAndStatus(String clienteId, StatusReserva status, Pageable pageable);
     Page<Reserva> findByClienteId(String clienteId, Pageable pageable);
     List<Reserva> findAllByClienteId(String clienteId);
+    boolean existsByEstacionamentoIdAndStatus(String estacionamentoId, StatusReserva status);
 
     boolean existsByVagaIdAndStatusAndDataHoraFimAfterAndDataHoraInicioBefore(
             String vagaId,

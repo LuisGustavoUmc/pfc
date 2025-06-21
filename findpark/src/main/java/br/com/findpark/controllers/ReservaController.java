@@ -71,4 +71,11 @@ public class ReservaController {
         reservaService.cancelarReserva(id);
         return new RespostaDto(HttpStatus.OK, "Reserva cancelada", true, Optional.empty());
     }
+
+    // Cancela uma reserva pelo ID informado e retorna resposta com status e mensagem
+    @DeleteMapping("/proprietario/{id}")
+    public RespostaDto cancelarReservaComoProprietario(@PathVariable String id) {
+        reservaService.cancelarReservaComoProprietario(id);
+        return new RespostaDto(HttpStatus.OK, "Reserva cancelada com sucesso", true, Optional.empty());
+    }
 }
