@@ -1,25 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api";
 import "./css/styles.css";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
-
-  function toggleSidebar() {
-    setExpanded(!expanded);
-  }
+  const [naoLidas, setNaoLidas] = useState(0);
 
   const role = localStorage.getItem("userRole");
 
-  if (!role) {
-    return (
-      <div className="sidebar bg-dark text-white p-3">
-        <p>
-          Você não tem permissão para acessar esta área. Faça login primeiro.
-        </p>
-      </div>
-    );
+  function toggleSidebar() {
+    setExpanded(!expanded);
   }
 
   function logout() {
@@ -33,12 +25,42 @@ export default function Sidebar() {
   }
 
   let homePath = "/";
-  if (role === "CLIENTE") {
-    homePath = "/home-cliente";
-  } else if (role === "PROPRIETARIO") {
-    homePath = "/home-proprietario";
-  } else if (role === "ADMIN") {
-    homePath = "/admin";
+  if (role === "CLIENTE") homePath = "/home-cliente";
+  else if (role === "PROPRIETARIO") homePath = "/home-proprietario";
+  else if (role === "ADMIN") homePath = "/admin";
+
+  const buscarNaoLidas = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await api.get("/api/notificacoes/nao-lidas", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNaoLidas(res.data);
+    } catch (error) {
+      console.error("Erro ao buscar notificações não lidas:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (role === "CLIENTE") {
+      buscarNaoLidas();
+
+      const interval = setInterval(() => {
+        buscarNaoLidas();
+      }, 30000); // Atualiza a cada 30 segundos
+
+      return () => clearInterval(interval);
+    }
+  }, [role]);
+
+  if (!role) {
+    return (
+      <div className="sidebar bg-dark text-white p-3">
+        <p>
+          Você não tem permissão para acessar esta área. Faça login primeiro.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -75,6 +97,23 @@ export default function Sidebar() {
                   <span>Reservas</span>
                 </Link>
               </li>
+              <li className="sidebar-item">
+                <Link
+                  to="/notificacoes"
+                  className="sidebar-link"
+                >
+                  <div>
+                    <i className="fa-solid fa-bell"></i>
+                    <span>Notificações</span>
+                  </div>
+
+                  {naoLidas > 0 && (
+                    <span className="badge bg-danger rounded-pill">
+                      {naoLidas}
+                    </span>
+                  )}
+                </Link>
+              </li>
             </>
           )}
 
@@ -93,11 +132,10 @@ export default function Sidebar() {
             <>
               <li className="sidebar-item">
                 <Link to="/usuarios" className="sidebar-link">
-                  <i class="fa-solid fa-users"></i>
+                  <i className="fa-solid fa-users"></i>
                   <span>Gerenciar Usuários</span>
                 </Link>
               </li>
-
               <li className="sidebar-item">
                 <Link to="/logs" className="sidebar-link">
                   <i className="fa-solid fa-file"></i>
@@ -116,7 +154,7 @@ export default function Sidebar() {
         </ul>
 
         <div className="sidebar-footer">
-          <Link href="#" className="sidebar-link" onClick={handleLogoutClick}>
+          <Link to="#" className="sidebar-link" onClick={handleLogoutClick}>
             <i className="fa-solid fa-arrow-right-from-bracket"></i>
             <span>Sair</span>
           </Link>

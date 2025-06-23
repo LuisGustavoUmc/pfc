@@ -121,11 +121,44 @@ const ReservaDetalhes = () => {
     <>
       <div className="accordion" id="accordionReservas">
         {reservas.map((reserva, index) => {
+          const precoHora = reserva.vaga?.preco ?? reserva.vagaPreco ?? 0;
+
           const duracaoHoras =
-            (new Date(reserva.dataHoraFim) - new Date(reserva.dataHoraInicio)) / (1000 * 60 * 60);
-          const totalEstimado = reserva.vaga?.preco
-            ? (duracaoHoras * reserva.vaga.preco).toFixed(2)
-            : "-";
+            (new Date(reserva.dataHoraFim) - new Date(reserva.dataHoraInicio)) /
+            (1000 * 60 * 60);
+
+          const totalEstimado =
+            precoHora > 0 ? (duracaoHoras * precoHora).toFixed(2) : "-";
+
+          const nomeEstacionamento =
+            reserva.estacionamento?.nome ||
+            reserva.nomeEstacionamento ||
+            "Estacionamento Removido";
+
+          const enderecoEstacionamento = reserva.estacionamento?.endereco
+            ? formatarEndereco(reserva.estacionamento.endereco)
+            : reserva.enderecoEstacionamento || "-";
+
+          const telefoneEstacionamento =
+            reserva.estacionamento?.telefone ||
+            reserva.telefoneEstacionamento ||
+            "Telefone não disponível";
+
+          const horarioEstacionamento =
+            reserva.estacionamento?.horaAbertura &&
+            reserva.estacionamento?.horaFechamento
+              ? `${reserva.estacionamento.horaAbertura} - ${reserva.estacionamento.horaFechamento}`
+              : reserva.horaAberturaEstacionamento &&
+                  reserva.horaFechamentoEstacionamento
+                ? `${reserva.horaAberturaEstacionamento} - ${reserva.horaFechamentoEstacionamento}`
+                : "N/A";
+
+          const tipoVaga =
+            reserva.vaga?.tipo?.join(", ") ||
+            (Array.isArray(reserva.vagaTipo)
+              ? reserva.vagaTipo.join(", ")
+              : reserva.vagaTipo) ||
+            "-";
 
           return (
             <div className="accordion-item" key={reserva.id}>
@@ -138,7 +171,7 @@ const ReservaDetalhes = () => {
                   aria-expanded="false"
                   aria-controls={`collapse-${index}`}
                 >
-                  {reserva.estacionamento?.nome || "Reserva"} -{" "}
+                  {nomeEstacionamento} -{" "}
                   {new Date(reserva.dataHoraInicio).toLocaleDateString()}
                 </button>
               </h2>
@@ -152,50 +185,45 @@ const ReservaDetalhes = () => {
                   <div className="reserva-card" data-status={reserva.status}>
                     {/* Bloco Estacionamento */}
                     <div className="reserva-bloco">
-                      <h5>{reserva.estacionamento?.nome || "Estacionamento não informado"}</h5>
+                      <h5>{nomeEstacionamento}</h5>
                       <p>
-                        <strong>Endereço:</strong>{" "}
-                        {reserva.estacionamento?.endereco
-                          ? formatarEndereco(reserva.estacionamento.endereco)
-                          : "-"}
+                        <strong>Endereço:</strong> {enderecoEstacionamento}
                       </p>
                       <p>
-                        <strong>Telefone:</strong> {reserva.estacionamento?.telefone || "-"}
+                        <strong>Telefone:</strong> {telefoneEstacionamento}
                       </p>
                       <p>
-                        <strong>Horário:</strong>{" "}
-                        {reserva.estacionamento
-                          ? `${reserva.estacionamento.horaAbertura} - ${reserva.estacionamento.horaFechamento}`
-                          : "-"}
+                        <strong>Horário:</strong> {horarioEstacionamento}
                       </p>
                     </div>
 
                     {/* Bloco Vaga */}
                     <div className="reserva-bloco">
                       <p>
-                        <strong>Vaga ID:</strong> {reserva.vaga?.id || "-"}
+                        <strong>Vaga ID:</strong>{" "}
+                        {reserva.vaga?.id || reserva.vagaId || "-"}
                       </p>
                       <p>
-                        <strong>Tipo:</strong> {reserva.vaga?.tipo?.join(", ") || "-"}
+                        <strong>Tipo:</strong> {tipoVaga}
                       </p>
                       <p>
                         <strong>Preço/h:</strong>{" "}
-                        {reserva.vaga?.preco !== undefined
-                          ? `R$ ${reserva.vaga.preco.toFixed(2)}`
-                          : "-"}
+                        {precoHora ? `R$ ${precoHora.toFixed(2)}` : "R$ 0.00"}
                       </p>
-                      {reserva.dataHoraInicio &&
-                        reserva.dataHoraFim &&
-                        reserva.vaga?.preco !== undefined && (
-                          <>
-                            <p>
-                              <strong>Duração:</strong> {duracaoHoras.toFixed(2)} hora(s)
-                            </p>
-                            <p>
-                              <strong>Total estimado:</strong> R$ {totalEstimado}
-                            </p>
-                          </>
-                        )}
+                      {reserva.dataHoraInicio && reserva.dataHoraFim && (
+                        <>
+                          <p>
+                            <strong>Duração:</strong> {duracaoHoras.toFixed(2)}{" "}
+                            hora(s)
+                          </p>
+                          <p>
+                            <strong>Total estimado:</strong>{" "}
+                            {totalEstimado !== "-"
+                              ? `R$ ${totalEstimado}`
+                              : "-"}
+                          </p>
+                        </>
+                      )}
                     </div>
 
                     {/* Bloco Dados da Reserva */}

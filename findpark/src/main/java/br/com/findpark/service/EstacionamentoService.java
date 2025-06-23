@@ -5,6 +5,7 @@ import br.com.findpark.dtos.estacionamentos.DetalhesEstacionamentoDto;
 import br.com.findpark.dtos.reservas.StatusReserva;
 import br.com.findpark.dtos.vagas.VagaDto;
 import br.com.findpark.entities.Estacionamento;
+import br.com.findpark.entities.Reserva;
 import br.com.findpark.entities.Vaga;
 import br.com.findpark.entities.enums.vagas.StatusVaga;
 import br.com.findpark.exceptions.estacionamento.EstacionamentoComReservaAtivaException;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +34,9 @@ public class EstacionamentoService {
 
     @Autowired
     private ReservaRepository reservaRepository;
+
+    @Autowired
+    private NotificacaoService notificacaoService;
 
     @Autowired
     private VagaRepository vagaRepository;
@@ -173,30 +178,58 @@ public class EstacionamentoService {
      * @throws RecursoNaoEncontradoException se o estacionamento não for encontrado.
      * @throws IllegalStateException se houver reservas ativas vinculadas ao estacionamento.
      */
+    @Transactional
     public void delete(String id) {
         Estacionamento estacionamento = estacionamentoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Estacionamento não encontrado com id " + id
                 ));
 
-        boolean possuiReservasAtivas = reservaRepository.existsByEstacionamentoIdAndStatus(id, StatusReserva.ATIVA);
+        List<Reserva> reservas = reservaRepository.findByEstacionamentoId(id);
 
-        if (possuiReservasAtivas) {
-            throw new EstacionamentoComReservaAtivaException(
-                    "Não é possível deletar o estacionamento. Existem reservas ativas vinculadas."
+        long reservasCanceladas = reservas.stream()
+                .filter(reserva -> reserva.getStatus() == StatusReserva.ATIVA)
+                .peek(reserva -> reserva.setStatus(StatusReserva.CANCELADA))
+                .count();
+
+        if (reservasCanceladas > 0) {
+            reservaRepository.saveAll(reservas);
+
+            log.info("Canceladas {} reservas do estacionamento {}", reservasCanceladas, id);
+
+            logExclusaoService.registrar(
+                    "Reserva",
+                    id,
+                    "Cancelamento automático de " + reservasCanceladas + " reservas ativas devido à exclusão do estacionamento '" + estacionamento.getNome() + "'."
             );
+
+            // 🔔 Enviar notificações para os clientes impactados
+            reservas.stream()
+                    .filter(reserva -> reserva.getStatus() == StatusReserva.CANCELADA)
+                    .forEach(reserva -> notificacaoService.enviar(
+                            reserva.getClienteId(),
+                            "Sua reserva no estacionamento '" + estacionamento.getNome() + "' foi cancelada, pois o estacionamento foi removido pelo proprietário."
+                    ));
         }
 
+        // 🔧 Remove vagas
         vagaRepository.deleteByEstacionamentoId(id);
+        log.info("Vagas do estacionamento {} foram removidas", id);
 
+        logExclusaoService.registrar(
+                "Vaga",
+                id,
+                "Todas as vagas do estacionamento '" + estacionamento.getNome() + "' foram removidas."
+        );
+
+        // 🗑️ Remove o estacionamento
         estacionamentoRepository.delete(estacionamento);
-
         log.info("Estacionamento {} foi deletado pelo usuário {}", id, SecurityUtils.getCurrentUsuario().getId());
 
         logExclusaoService.registrar(
-                "Estacionamento", // Nome da entidade
-                id,               // ID do estacionamento deletado
-                "Estacionamento '" + estacionamento.getNome() + "' removido."
+                "Estacionamento",
+                id,
+                "Estacionamento '" + estacionamento.getNome() + "' foi removido."
         );
     }
 }

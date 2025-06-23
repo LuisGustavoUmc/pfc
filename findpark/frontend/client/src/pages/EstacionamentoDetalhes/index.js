@@ -63,35 +63,38 @@ export default function DetalhesEstacionamento() {
   }, [id, paginaAtual]);
 
   const handleDeletarEstacionamento = async (id) => {
-    const confirmar = await confirmarAcao(
-      "Tem certeza que deseja excluir este estacionamento?"
-    );
-    if (!confirmar) return;
+  const confirmar = await confirmarAcao(
+    "Tem certeza que deseja excluir este estacionamento? Esta ação não poderá ser desfeita. Todas as reservas ativas serão canceladas e as vagas serão removidas."
+  );
 
-    try {
-      const token = localStorage.getItem("accessToken");
-      await api.delete(`/api/estacionamentos/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  if (!confirmar) return;
 
-      toast.success("Estacionamento excluído com sucesso!");
-      navigate("/home-proprietario");
-    } catch (err) {
-      console.error("Erro ao excluir estacionamento:", err);
+  try {
+    const token = localStorage.getItem("accessToken");
 
-      const status = err.response?.status;
-      const mensagem =
-        err.response?.data?.message || "Erro ao excluir estacionamento.";
+    await api.delete(`/api/estacionamentos/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      if (status === 409) {
-        toast.error(mensagem); 
-      } else if (status === 404) {
-        toast.error("Estacionamento não encontrado.");
-      } else {
-        toast.error("Erro ao excluir estacionamento.");
-      }
+    toast.success("Estacionamento excluído com sucesso!");
+    navigate("/home-proprietario");
+  } catch (err) {
+    console.error("Erro ao excluir estacionamento:", err);
+
+    const status = err.response?.status;
+    const mensagem = err.response?.data?.message || "Erro ao excluir estacionamento.";
+
+    if (status === 409) {
+      toast.error(`${mensagem}`); // Conflito: pode ser reserva ativa
+    } else if (status === 404) {
+      toast.error("Estacionamento não encontrado.");
+    } else if (status === 403) {
+      toast.error("Você não tem permissão para excluir este estacionamento.");
+    } else {
+      toast.error("Erro inesperado ao excluir estacionamento.");
     }
-  };
+  }
+};
 
   const handleDeletarVaga = async (vagaId) => {
     const confirmar = await confirmarAcao("Deseja excluir esta vaga?");

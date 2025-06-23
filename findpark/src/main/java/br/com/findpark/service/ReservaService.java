@@ -5,6 +5,7 @@ import br.com.findpark.dtos.reservas.ReservaDetalhadaDto;
 import br.com.findpark.dtos.reservas.StatusReserva;
 import br.com.findpark.dtos.vagas.VagaDto;
 import br.com.findpark.entities.*;
+import br.com.findpark.entities.enums.vagas.TipoVaga;
 import br.com.findpark.exceptions.reserva.ReservaConflitanteException;
 import br.com.findpark.exceptions.usuario.RecursoNaoEncontradoException;
 import br.com.findpark.repositories.EstacionamentoRepository;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
@@ -55,7 +57,6 @@ public class ReservaService {
         reserva.setClienteId(SecurityUtils.getCurrentUsuario().getId());
         reserva.setStatus(StatusReserva.ATIVA);
 
-        // Buscar o estacionamento e a vaga ANTES de validar
         Estacionamento estacionamento = buscarEstacionamento(reserva.getEstacionamentoId());
         Vaga vaga = buscarVaga(reserva.getVagaId());
 
@@ -84,9 +85,31 @@ public class ReservaService {
             throw new ReservaConflitanteException("Essa placa já possui uma reserva ativa no período selecionado.");
         }
 
+        // 🔥 Salvar snapshot do estacionamento
+        reserva.setNomeEstacionamento(estacionamento.getNome());
+        reserva.setEnderecoEstacionamento(formatarEndereco(estacionamento.getEndereco()));
+        reserva.setTelefoneEstacionamento(estacionamento.getTelefone());
+        reserva.setHoraAberturaEstacionamento(estacionamento.getHoraAbertura().format(DateTimeFormatter.ofPattern("HH:mm")));
+        reserva.setHoraFechamentoEstacionamento(estacionamento.getHoraFechamento().format(DateTimeFormatter.ofPattern("HH:mm")));
+
+        // 🔥 Dados da vaga
+        reserva.setVagaTipo(vaga.getTipo() != null ? vaga.getTipo().stream().map(Enum::name).toList() : null);
+        reserva.setVagaPreco(vaga.getPreco());
+
         Reserva reservaSalva = reservaRepository.save(reserva);
         log.info("Reserva criada com sucesso para o cliente {} na vaga {}", reserva.getClienteId(), reserva.getVagaId());
         return reservaSalva;
+    }
+
+    private String formatarEndereco(Endereco endereco) {
+        if (endereco == null) return "Endereço não disponível";
+        return String.format("%s, %s - %s, %s - %s",
+                endereco.getLogradouro() != null ? endereco.getLogradouro() : "",
+                endereco.getNumero() != null ? endereco.getNumero() : "",
+                endereco.getBairro() != null ? endereco.getBairro() : "",
+                endereco.getLocalidade() != null ? endereco.getLocalidade() : "",
+                endereco.getUf() != null ? endereco.getUf() : ""
+        ).replaceAll(", -", "").replaceAll(", ,", ",").trim();
     }
 
     // Valida os dados da reserva e regras de horários conforme funcionamento do estacionamento.
@@ -189,41 +212,53 @@ public class ReservaService {
         return new PageImpl<>(pageContent, pageable, dtos.size());
     }
 
+    private Endereco criarEnderecoAPartirDeString(String enderecoFormatado) {
+        Endereco endereco = new Endereco();
+        endereco.setLogradouro(enderecoFormatado);
+        endereco.setNumero("");
+        endereco.setBairro("");
+        endereco.setLocalidade("");
+        endereco.setUf("");
+        endereco.setCep("");
+        return endereco;
+    }
+
+
     private ReservaDetalhadaDto mapearParaDto(Reserva reserva, Estacionamento estacionamento, Vaga vaga) {
-        // Endereço
-        Endereco endereco = (estacionamento != null)
+        // Formatar horário
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        String horaAbertura = (estacionamento != null && estacionamento.getHoraAbertura() != null)
+                ? estacionamento.getHoraAbertura().format(formatter)
+                : (reserva.getHoraAberturaEstacionamento() != null ? reserva.getHoraAberturaEstacionamento() : "N/A");
+
+        String horaFechamento = (estacionamento != null && estacionamento.getHoraFechamento() != null)
+                ? estacionamento.getHoraFechamento().format(formatter)
+                : (reserva.getHoraFechamentoEstacionamento() != null ? reserva.getHoraFechamentoEstacionamento() : "N/A");
+
+        // Endereço como objeto
+        Endereco endereco = (estacionamento != null && estacionamento.getEndereco() != null)
                 ? estacionamento.getEndereco()
-                : new Endereco(
-                "", "Endereço não disponível", "", "", "", "",
-                "", "", "", "", "", "", "", "", ""
-        );
+                : (reserva.getEnderecoEstacionamento() != null
+                ? criarEnderecoAPartirDeString(reserva.getEnderecoEstacionamento())
+                : criarEnderecoAPartirDeString("Endereço não disponível"));
 
-        // DTO de estacionamento
-        DetalhesEstacionamentoDto estacionamentoDto = (estacionamento != null)
-                ? new DetalhesEstacionamentoDto(
-                estacionamento.getId(),
-                estacionamento.getNome(),
+        // DTO de Estacionamento
+        DetalhesEstacionamentoDto estacionamentoDto = new DetalhesEstacionamentoDto(
+                (estacionamento != null) ? estacionamento.getId() : reserva.getEstacionamentoId(),
+                (estacionamento != null) ? estacionamento.getNome()
+                        : (reserva.getNomeEstacionamento() != null ? reserva.getNomeEstacionamento() : "[Estacionamento Removido]"),
                 endereco,
-                estacionamento.getTelefone(),
-                estacionamento.getCapacidade(),
-                estacionamento.getVagasDisponiveis(),
-                estacionamento.getHoraAbertura() != null ? estacionamento.getHoraAbertura().toString() : "N/A",
-                estacionamento.getHoraFechamento() != null ? estacionamento.getHoraFechamento().toString() : "N/A",
-                null
-        )
-                : new DetalhesEstacionamentoDto(
-                reserva.getEstacionamentoId(),
-                "[Estacionamento Removido]",
-                endereco,
-                "Telefone não disponível",
-                0,
-                0,
-                "N/A",
-                "N/A",
+                (estacionamento != null) ? estacionamento.getTelefone()
+                        : (reserva.getTelefoneEstacionamento() != null ? reserva.getTelefoneEstacionamento() : "Telefone não disponível"),
+                (estacionamento != null) ? estacionamento.getCapacidade() : 0,
+                (estacionamento != null) ? estacionamento.getVagasDisponiveis() : 0,
+                horaAbertura,
+                horaFechamento,
                 null
         );
 
-        // DTO de vaga
+        // DTO de Vaga
         VagaDto vagaDto = (vaga != null)
                 ? new VagaDto(
                 vaga.getId(),
@@ -232,13 +267,14 @@ public class ReservaService {
         )
                 : new VagaDto(
                 reserva.getVagaId(),
-                List.of(), // Lista vazia ou pode criar um tipo específico "REMOVIDA"
-                0.0
+                reserva.getVagaTipo() != null
+                        ? reserva.getVagaTipo().stream()
+                        .map(tipo -> tipo.replace("[", "").replace("]", "").trim())
+                        .map(TipoVaga::valueOf)
+                        .toList()
+                        : List.of(),
+                reserva.getVagaPreco() != null ? reserva.getVagaPreco() : 0.0
         );
-
-        // Cliente
-        Usuario cliente = usuarioRepository.findById(reserva.getClienteId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente não encontrado para a reserva"));
 
         return new ReservaDetalhadaDto(
                 reserva.getId(),
@@ -248,10 +284,9 @@ public class ReservaService {
                 reserva.getStatus(),
                 estacionamentoDto,
                 vagaDto,
-                cliente.getNome()
+                null
         );
     }
-
 
     // Lista as reservas dos estacionamentos do proprietário logado, com filtro opcional por status e placa.
     public Page<ReservaDetalhadaDto> listarReservasDosMeusEstacionamentos(Pageable pageable, StatusReserva status, String placaVeiculo) {
